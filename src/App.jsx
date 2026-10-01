@@ -6,8 +6,11 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Cotizaciones from "./pages/Cotizaciones";
+import CotizacionNueva from "./pages/CotizacionNueva";
+import CotizacionDetalle from "./pages/CotizacionDetalle";
 import Proyectos from "./pages/Proyectos";
 import Clientes from "./pages/Clientes";
+import ClienteDetalle from "./pages/ClienteDetalle";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -38,6 +41,22 @@ function App() {
               }
             />
             <Route
+              path="/cotizaciones/nueva"
+              element={
+                <ProtectedRoute>
+                  <CotizacionNueva />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cotizaciones/:id"
+              element={
+                <ProtectedRoute>
+                  <CotizacionDetalle />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/proyectos"
               element={
                 <ProtectedRoute>
@@ -50,6 +69,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Clientes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clientes/:id"
+              element={
+                <ProtectedRoute>
+                  <ClienteDetalle />
                 </ProtectedRoute>
               }
             />
