@@ -20,6 +20,8 @@ function CotizacionNueva() {
     tipos_ventana: [],
     colores: [],
     vidrios: [],
+    tipos_disponibles: [],
+    vidrios_disponibles: [],
   });
   const [clientes, setClientes] = useState([]);
   const [clienteModal, setClienteModal] = useState(false);
@@ -42,9 +44,9 @@ function CotizacionNueva() {
       setOpciones(o);
       setDraft((d) => ({
         ...d,
-        tipo: o.tipos_ventana[0]?.value || "",
+        tipo: o.tipos_disponibles[0]?.value || "",
         color: o.colores[0]?.value || "",
-        vidrio: o.vidrios[0]?.value || "",
+        vidrio: o.vidrios_disponibles[0]?.value || "",
       }));
     });
     listClientes().then(setClientes);
@@ -204,11 +206,18 @@ function CotizacionNueva() {
         <div className="panel">
           <h2>Ventanas</h2>
 
+          {opciones.vidrios_disponibles.length === 0 && (
+            <p className="form-error">
+              No hay vidrios configurados. Pídele al jefe que agregue planchas en
+              Precios → Vidrios.
+            </p>
+          )}
+
           <div className="ventana-draft">
             <label className="field">
               <span>Tipo</span>
               <select value={draft.tipo} onChange={changeDraft("tipo")}>
-                {opciones.tipos_ventana.map((o) => (
+                {opciones.tipos_disponibles.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -228,7 +237,7 @@ function CotizacionNueva() {
             <label className="field">
               <span>Vidrio</span>
               <select value={draft.vidrio} onChange={changeDraft("vidrio")}>
-                {opciones.vidrios.map((o) => (
+                {opciones.vidrios_disponibles.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>

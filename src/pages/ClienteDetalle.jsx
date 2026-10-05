@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getCliente, updateCliente, deleteCliente } from "../services/clientes";
+import { listProyectos, ESTADO_PROD_CLASS } from "../services/proyectos";
+import { formatCLP, formatFecha } from "../utils/format";
 import ClienteForm from "../components/ClienteForm";
 
 function Dato({ label, children }) {
@@ -16,6 +18,7 @@ function ClienteDetalle() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [cliente, setCliente] = useState(null);
+  const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -24,6 +27,7 @@ function ClienteDetalle() {
     setLoading(true);
     try {
       setCliente(await getCliente(id));
+      setProyectos(await listProyectos({ cliente: id }));
     } catch {
       setNotFound(true);
     } finally {
@@ -86,11 +90,44 @@ function ClienteDetalle() {
         </div>
       </div>
 
-      <div className="panel">
-        <h2>Proyectos asociados</h2>
-        <p className="muted">
-          Aquí se listarán los proyectos de este cliente. (Fase 4)
-        </p>
+      <div className="panel panel-flush">
+        <div className="pad">
+          <h2>Proyectos asociados</h2>
+        </div>
+        {proyectos.length === 0 ? (
+          <p className="muted pad">Este cliente aún no tiene proyectos.</p>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Creado</th>
+                <th className="col-actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {proyectos.map((p) => (
+                <tr key={p.id}>
+                  <td>#{p.id}</td>
+                  <td>
+                    <span className={ESTADO_PROD_CLASS[p.estado_produccion]}>
+                      {p.estado_display}
+                    </span>
+                  </td>
+                  <td>{formatCLP(p.total)}</td>
+                  <td>{formatFecha(p.fecha_creacion)}</td>
+                  <td className="col-actions">
+                    <Link to={`/proyectos/${p.id}`} className="btn btn-ghost btn-sm">
+                      Ver
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {editing && (

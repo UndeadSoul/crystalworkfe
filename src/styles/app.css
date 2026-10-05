@@ -670,6 +670,32 @@ h3 {
   color: #991b1b;
 }
 
+.badge-neutral {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.badge-info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.estado-selector {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.estado-selector select {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .badge-warning {
     background: #78350f;
@@ -682,6 +708,14 @@ h3 {
   :root:not([data-theme="light"]) .badge-danger {
     background: #7f1d1d;
     color: #fecaca;
+  }
+  :root:not([data-theme="light"]) .badge-neutral {
+    background: #334155;
+    color: #cbd5e1;
+  }
+  :root:not([data-theme="light"]) .badge-info {
+    background: #1e3a5f;
+    color: #bfdbfe;
   }
 }
 
@@ -727,6 +761,139 @@ h3 {
 .form-footer {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 10px;
   margin-top: 8px;
+}
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* ---------- Catálogo ---------- */
+.config-form {
+  max-width: 460px;
+}
+
+.serie-card {
+  margin-bottom: 18px;
+}
+
+.serie-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.serie-head h3 {
+  margin: 0;
+}
+
+.tag {
+  display: inline-block;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.crud-block {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.crud-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.crud-head h3,
+.crud-head h4 {
+  margin: 0;
+}
+
+.table-compact th,
+.table-compact td {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.muted.small,
+.small {
+  font-size: 0.85rem;
+}
+
+code {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.85em;
+}
+
+/* ---------- Pendientes (dashboard) ---------- */
+.pendientes-count {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 0 8px;
+}
+
+.pendientes-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.pendientes-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.pendientes-list a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.pendientes-list a:hover {
+  text-decoration: underline;
 }

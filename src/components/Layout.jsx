@@ -1,10 +1,12 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { roleLabel } from "../utils/roles";
+import { roleKey, roleLabel, ROLES } from "../utils/roles";
 
 function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const esJefeOAdmin =
+    user && [ROLES.ADMIN, ROLES.JEFE].includes(roleKey(user));
 
   const handleLogout = () => {
     logout();
@@ -25,6 +27,7 @@ function Layout() {
               <NavLink to="/proyectos">Proyectos</NavLink>
               <NavLink to="/clientes">Clientes</NavLink>
               <NavLink to="/dashboard">Dashboard</NavLink>
+              {esJefeOAdmin && <NavLink to="/precios">Precios</NavLink>}
             </>
           ) : (
             <>

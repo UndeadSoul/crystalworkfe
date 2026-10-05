@@ -15,3 +15,11 @@ export function createCotizacion(data) {
 export function getOpcionesCotizacion() {
   return api.get("/api/cotizaciones/opciones/").then((r) => r.data);
 }
+
+export function aprobarCotizacion(id) {
+  return api.post(`/api/cotizaciones/${id}/aprobar/`).then((r) => r.data);
+}
+
+export function rechazarCotizacion(id) {
+  return api.post(`/api/cotizaciones/${id}/rechazar/`).then((r) => r.data);
+}

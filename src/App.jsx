@@ -9,8 +9,10 @@ import Cotizaciones from "./pages/Cotizaciones";
 import CotizacionNueva from "./pages/CotizacionNueva";
 import CotizacionDetalle from "./pages/CotizacionDetalle";
 import Proyectos from "./pages/Proyectos";
+import ProyectoDetalle from "./pages/ProyectoDetalle";
 import Clientes from "./pages/Clientes";
 import ClienteDetalle from "./pages/ClienteDetalle";
+import Precios from "./pages/Precios";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -65,6 +67,14 @@ function App() {
               }
             />
             <Route
+              path="/proyectos/:id"
+              element={
+                <ProtectedRoute>
+                  <ProyectoDetalle />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/clientes"
               element={
                 <ProtectedRoute>
@@ -77,6 +87,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ClienteDetalle />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/precios"
+              element={
+                <ProtectedRoute roles={["ADMIN", "JEFE"]}>
+                  <Precios />
                 </ProtectedRoute>
               }
             />

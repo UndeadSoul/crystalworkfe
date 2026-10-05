@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getCotizacion } from "../services/cotizaciones";
+import {
+  getCotizacion,
+  aprobarCotizacion,
+  rechazarCotizacion,
+} from "../services/cotizaciones";
+import { useAuth } from "../contexts/AuthContext";
+import { roleKey, ROLES } from "../utils/roles";
 import { ESTADO_CLASS, formatCLP, formatFecha } from "../utils/format";
 
 function Dato({ label, children }) {
@@ -14,9 +20,11 @@ function Dato({ label, children }) {
 
 function CotizacionDetalle() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [cot, setCot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [resolviendo, setResolviendo] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -25,6 +33,25 @@ function CotizacionDetalle() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const puedeResolver =
+    cot &&
+    cot.estado === "PENDIENTE" &&
+    [ROLES.ADMIN, ROLES.JEFE].includes(roleKey(user));
+
+  const resolver = async (accion) => {
+    const verbo = accion === "aprobar" ? "aprobar" : "rechazar";
+    if (!window.confirm(`¿Seguro que deseas ${verbo} la cotización #${cot.id}?`)) return;
+    setResolviendo(true);
+    try {
+      const fn = accion === "aprobar" ? aprobarCotizacion : rechazarCotizacion;
+      setCot(await fn(cot.id));
+    } catch {
+      alert("No se pudo completar la acción.");
+    } finally {
+      setResolviendo(false);
+    }
+  };
 
   if (loading) return <div className="page-loading">Cargando…</div>;
   if (notFound)
@@ -50,8 +77,34 @@ function CotizacionDetalle() {
             {cot.cliente_nombre} · Ingresada por {cot.empleado_nombre} el{" "}
             {formatFecha(cot.fecha_ingreso)}
           </p>
+          {cot.estado !== "PENDIENTE" && cot.resuelta_por_nombre && (
+            <p className="page-sub">
+              {cot.estado_display} por {cot.resuelta_por_nombre} el{" "}
+              {formatFecha(cot.fecha_resolucion)}
+            </p>
+          )}
         </div>
-        <span className={ESTADO_CLASS[cot.estado]}>{cot.estado_display}</span>
+        <div className="actions">
+          <span className={ESTADO_CLASS[cot.estado]}>{cot.estado_display}</span>
+          {puedeResolver && (
+            <>
+              <button
+                className="btn btn-primary btn-sm"
+                disabled={resolviendo}
+                onClick={() => resolver("aprobar")}
+              >
+                Aprobar
+              </button>
+              <button
+                className="btn btn-danger btn-sm"
+                disabled={resolviendo}
+                onClick={() => resolver("rechazar")}
+              >
+                Rechazar
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       <div className="panel">
@@ -79,6 +132,8 @@ function CotizacionDetalle() {
               <th>Vidrio</th>
               <th>Medidas (cm)</th>
               <th>Cant.</th>
+              <th>Precio unit.</th>
+              <th>Subtotal</th>
             </tr>
           </thead>
           <tbody>
@@ -91,6 +146,14 @@ function CotizacionDetalle() {
                   {v.ancho_cm} × {v.alto_cm}
                 </td>
                 <td>{v.cantidad}</td>
+                <td>
+                  {v.precio_calculado ? (
+                    formatCLP(v.precio_unitario)
+                  ) : (
+                    <span className="badge badge-warning">Sin precio</span>
+                  )}
+                </td>
+                <td>{v.precio_calculado ? formatCLP(v.subtotal) : "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -102,12 +165,17 @@ function CotizacionDetalle() {
         <div className="detail-grid">
           <Dato label="Comentarios">{cot.comentarios}</Dato>
           <Dato label="Monto agregado">{formatCLP(cot.monto_agregado)}</Dato>
+          {cot.requiere_transporte && (
+            <Dato label="Transporte">{formatCLP(cot.costo_transporte)}</Dato>
+          )}
           <Dato label="Total">{formatCLP(cot.total)}</Dato>
         </div>
-        <p className="muted">
-          El total es provisional hasta que se definan los precios de materiales y
-          transporte.
-        </p>
+        {cot.ventanas.some((v) => !v.precio_calculado) && (
+          <p className="muted">
+            Algunas ventanas no tienen precio porque falta cargar datos en el catálogo.
+            Pídele al jefe que complete los precios y vuelve a abrir la cotización.
+          </p>
+        )}
       </div>
     </div>
   );

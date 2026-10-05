@@ -1,9 +1,23 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { roleKey, roleLabel, ROLES } from "../utils/roles";
+import { listCotizaciones } from "../services/cotizaciones";
+import { formatCLP, formatFecha } from "../utils/format";
 
 function Dashboard() {
   const { user } = useAuth();
   const rol = roleKey(user);
+  const esJefe = rol === ROLES.JEFE || rol === ROLES.ADMIN;
+
+  const [pendientes, setPendientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    listCotizaciones({ estado: "PENDIENTE" })
+      .then(setPendientes)
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="page">
@@ -24,13 +38,34 @@ function Dashboard() {
         </article>
 
         <article className="panel">
-          <h2>Pendientes</h2>
-          {rol === ROLES.JEFE ? (
-            <p className="muted">
-              Aquí verás las cotizaciones pendientes de aprobación.
-            </p>
+          <h2>
+            {esJefe ? "Pendientes de aprobación" : "Cotizaciones pendientes"}
+          </h2>
+          {loading ? (
+            <p className="muted">Cargando…</p>
+          ) : pendientes.length === 0 ? (
+            <p className="muted">No hay cotizaciones pendientes.</p>
           ) : (
-            <p className="muted">Aquí verás tus cotizaciones en curso.</p>
+            <>
+              <p className="pendientes-count">{pendientes.length}</p>
+              <ul className="pendientes-list">
+                {pendientes.slice(0, 5).map((c) => (
+                  <li key={c.id}>
+                    <Link to={`/cotizaciones/${c.id}`}>
+                      #{c.id} · {c.cliente_nombre}
+                    </Link>
+                    <span className="muted small">
+                      {formatCLP(c.total)} · {formatFecha(c.fecha_ingreso)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {pendientes.length > 5 && (
+                <Link to="/cotizaciones" className="link-back">
+                  Ver todas →
+                </Link>
+              )}
+            </>
           )}
         </article>
 
