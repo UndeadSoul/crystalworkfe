@@ -1,13 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getProyecto,
   getHojaCorte,
-  updateEstadoProyecto,
+  updateProyecto,
   ESTADOS_PRODUCCION,
   ESTADO_PROD_CLASS,
+  ESTADOS_PAGO,
+  ESTADO_PAGO_CLASS,
 } from "../services/proyectos";
 import { formatCLP, formatFecha } from "../utils/format";
+
+// Columnas de la hoja de corte y el tipo de valor para ordenar.
+const COLS_CORTE = [
+  { key: "codigo", label: "Código", tipo: "texto" },
+  { key: "tipo_display", label: "Tipo", tipo: "texto" },
+  { key: "color_display", label: "Color", tipo: "texto" },
+  { key: "perfil", label: "Perfil", tipo: "texto" },
+  { key: "largo_mm", label: "Largo (mm)", tipo: "num" },
+  { key: "cantidad", label: "Cant.", tipo: "num" },
+];
 
 function ProyectoDetalle() {
   const { id } = useParams();
@@ -16,6 +28,30 @@ function ProyectoDetalle() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  // orden = null -> orden natural del backend (por orden de perfil).
+  const [orden, setOrden] = useState(null);
+
+  const ordenarPor = (key) =>
+    setOrden((o) =>
+      o && o.key === key
+        ? { key, dir: o.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: "asc" }
+    );
+
+  const piezasOrdenadas = useMemo(() => {
+    if (!orden) return piezas;
+    const col = COLS_CORTE.find((c) => c.key === orden.key);
+    const factor = orden.dir === "asc" ? 1 : -1;
+    return [...piezas].sort((a, b) => {
+      const va = a[orden.key];
+      const vb = b[orden.key];
+      const cmp =
+        col?.tipo === "num"
+          ? Number(va) - Number(vb)
+          : String(va).localeCompare(String(vb), "es", { numeric: true });
+      return cmp * factor;
+    });
+  }, [piezas, orden]);
 
   useEffect(() => {
     setLoading(true);
@@ -28,12 +64,12 @@ function ProyectoDetalle() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const cambiarEstado = async (estado) => {
+  const cambiar = async (data) => {
     setGuardando(true);
     try {
-      setProy(await updateEstadoProyecto(id, estado));
+      setProy(await updateProyecto(id, data));
     } catch {
-      alert("No se pudo actualizar el estado.");
+      alert("No se pudo actualizar.");
     } finally {
       setGuardando(false);
     }
@@ -70,27 +106,47 @@ function ProyectoDetalle() {
           <span className={ESTADO_PROD_CLASS[proy.estado_produccion]}>
             {proy.estado_display}
           </span>
+          <span className={ESTADO_PAGO_CLASS[proy.estado_pago]}>
+            {proy.estado_pago_display}
+          </span>
         </div>
       </header>
 
       <div className="panel">
-        <h2>Estado de fabricación</h2>
+        <h2>Estado</h2>
         <div className="estado-selector">
-          <select
-            value={proy.estado_produccion}
-            disabled={guardando}
-            onChange={(e) => cambiarEstado(e.target.value)}
-          >
-            {ESTADOS_PRODUCCION.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <Link to={`/cotizaciones/${cot.id}`} className="link-back">
-            Ver cotización #{cot.id} →
-          </Link>
+          <label className="field">
+            <span>Fabricación</span>
+            <select
+              value={proy.estado_produccion}
+              disabled={guardando}
+              onChange={(e) => cambiar({ estado_produccion: e.target.value })}
+            >
+              {ESTADOS_PRODUCCION.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Pago</span>
+            <select
+              value={proy.estado_pago}
+              disabled={guardando}
+              onChange={(e) => cambiar({ estado_pago: e.target.value })}
+            >
+              {ESTADOS_PAGO.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
+        <Link to={`/cotizaciones/${cot.id}`} className="link-back">
+          Ver cotización #{cot.id} →
+        </Link>
       </div>
 
       <div className="panel panel-flush">
@@ -133,21 +189,39 @@ function ProyectoDetalle() {
         {piezas.length === 0 ? (
           <p className="muted pad">Sin piezas (revisa que las ventanas tengan tipo válido).</p>
         ) : (
-          <table className="table">
+          <table className="table table-sortable">
             <thead>
               <tr>
-                <th>Tipo de ventana</th>
-                <th>Perfil</th>
-                <th>Largo (m)</th>
-                <th>Cantidad</th>
+                {COLS_CORTE.map((c) => {
+                  const activa = orden?.key === c.key;
+                  return (
+                    <th
+                      key={c.key}
+                      className="th-sort"
+                      aria-sort={
+                        activa ? (orden.dir === "asc" ? "ascending" : "descending") : "none"
+                      }
+                      onClick={() => ordenarPor(c.key)}
+                    >
+                      {c.label}
+                      <span className="sort-ind">
+                        {activa ? (orden.dir === "asc" ? "▲" : "▼") : "↕"}
+                      </span>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {piezas.map((p, i) => (
+              {piezasOrdenadas.map((p, i) => (
                 <tr key={i}>
+                  <td>
+                    <strong>{p.codigo}</strong>
+                  </td>
                   <td>{p.tipo_display}</td>
+                  <td>{p.color_display}</td>
                   <td>{p.perfil}</td>
-                  <td>{p.largo_m}</td>
+                  <td>{p.largo_mm}</td>
                   <td>{p.cantidad}</td>
                 </tr>
               ))}

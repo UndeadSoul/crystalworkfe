@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createCotizacion, getOpcionesCotizacion } from "../services/cotizaciones";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  createCotizacion,
+  updateCotizacion,
+  getCotizacion,
+  getOpcionesCotizacion,
+} from "../services/cotizaciones";
 import { listClientes, createCliente } from "../services/clientes";
+import { blockExponentKey } from "../utils/format";
 import ClienteForm from "../components/ClienteForm";
+
+const MIN_CM = 30;
+const MAX_CM = 250;
 
 const EMPTY_DRAFT = {
   tipo: "",
@@ -15,6 +24,7 @@ const EMPTY_DRAFT = {
 
 function CotizacionNueva() {
   const navigate = useNavigate();
+  const { id: editId } = useParams();
 
   const [opciones, setOpciones] = useState({
     tipos_ventana: [],
@@ -52,6 +62,29 @@ function CotizacionNueva() {
     listClientes().then(setClientes);
   }, []);
 
+  // Modo edición: precarga la cotización existente.
+  useEffect(() => {
+    if (!editId) return;
+    getCotizacion(editId).then((cot) => {
+      setCliente(String(cot.cliente));
+      setDireccionEntrega(cot.direccion_entrega || "");
+      setRequiereTransporte(cot.requiere_transporte);
+      setDistancia(cot.distancia_transporte_km || "");
+      setComentarios(cot.comentarios || "");
+      setMontoAgregado(cot.monto_agregado ? String(cot.monto_agregado) : "");
+      setVentanas(
+        cot.ventanas.map((v) => ({
+          tipo: v.tipo,
+          color: v.color,
+          vidrio: v.vidrio,
+          ancho_cm: v.ancho_cm,
+          alto_cm: v.alto_cm,
+          cantidad: v.cantidad,
+        }))
+      );
+    });
+  }, [editId]);
+
   // Mapas valor -> etiqueta para el resumen.
   const labels = useMemo(() => {
     const toMap = (arr) => Object.fromEntries(arr.map((o) => [o.value, o.label]));
@@ -71,8 +104,10 @@ function CotizacionNueva() {
       setError("Selecciona tipo, color y vidrio de la ventana.");
       return;
     }
-    if (!(Number(draft.ancho_cm) > 0) || !(Number(draft.alto_cm) > 0)) {
-      setError("Ingresa ancho y alto válidos (mayores a 0).");
+    const a = Number(draft.ancho_cm);
+    const h = Number(draft.alto_cm);
+    if (!(a >= MIN_CM && a <= MAX_CM) || !(h >= MIN_CM && h <= MAX_CM)) {
+      setError(`Las dimensiones deben estar entre ${MIN_CM} y ${MAX_CM} cm.`);
       return;
     }
     const cantidad = Math.max(1, parseInt(draft.cantidad, 10) || 1);
@@ -104,13 +139,17 @@ function CotizacionNueva() {
       setError("Agrega al menos una ventana.");
       return;
     }
+    if (requiereTransporte && !(Number(distancia) > 0)) {
+      setError("Ingresa la distancia de transporte (mayor a 0).");
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
         cliente: Number(cliente),
         direccion_entrega: direccionEntrega,
         requiere_transporte: requiereTransporte,
-        distancia_transporte_km: requiereTransporte && distancia ? distancia : null,
+        distancia_transporte_km: requiereTransporte ? distancia : null,
         comentarios,
         monto_agregado: montoAgregado ? Number(montoAgregado) : 0,
         ventanas: ventanas.map((v) => ({
@@ -122,8 +161,10 @@ function CotizacionNueva() {
           cantidad: v.cantidad,
         })),
       };
-      const creada = await createCotizacion(payload);
-      navigate(`/cotizaciones/${creada.id}`);
+      const guardada = editId
+        ? await updateCotizacion(editId, payload)
+        : await createCotizacion(payload);
+      navigate(`/cotizaciones/${guardada.id}`);
     } catch (err) {
       const data = err.response ? err.response.data : null;
       setError(
@@ -140,11 +181,17 @@ function CotizacionNueva() {
   return (
     <div className="page">
       <header className="page-head">
-        <h1>Nueva cotización</h1>
-        <p className="page-sub">Estado inicial: Pendiente de aprobación.</p>
+        <h1>{editId ? `Editar cotización #${editId}` : "Nueva cotización"}</h1>
+        <p className="page-sub">
+          {editId
+            ? "Solo se puede editar mientras está pendiente."
+            : "Estado inicial: Pendiente de aprobación."}
+        </p>
       </header>
 
       <form onSubmit={handleSubmit}>
+        <div className="cotizacion-grid">
+        <div className="cotizacion-main">
         {/* Cliente y entrega */}
         <div className="panel">
           <h2>Cliente y entrega</h2>
@@ -175,6 +222,7 @@ function CotizacionNueva() {
             <span>Dirección de entrega</span>
             <input
               value={direccionEntrega}
+              maxLength={100}
               onChange={(e) => setDireccionEntrega(e.target.value)}
             />
           </label>
@@ -190,21 +238,23 @@ function CotizacionNueva() {
 
           {requiereTransporte && (
             <label className="field" style={{ maxWidth: 240 }}>
-              <span>Distancia de transporte (km)</span>
+              <span>Distancia de transporte (km) *</span>
               <input
                 type="number"
                 min="0"
                 step="0.1"
+                required
                 value={distancia}
+                onKeyDown={blockExponentKey}
                 onChange={(e) => setDistancia(e.target.value)}
               />
             </label>
           )}
         </div>
 
-        {/* Ventanas */}
+        {/* Agregar ventana */}
         <div className="panel">
-          <h2>Ventanas</h2>
+          <h2>Agregar ventana</h2>
 
           {opciones.vidrios_disponibles.length === 0 && (
             <p className="form-error">
@@ -248,9 +298,11 @@ function CotizacionNueva() {
               <span>Ancho (cm)</span>
               <input
                 type="number"
-                min="0"
+                min={MIN_CM}
+                max={MAX_CM}
                 step="0.1"
                 value={draft.ancho_cm}
+                onKeyDown={blockExponentKey}
                 onChange={changeDraft("ancho_cm")}
               />
             </label>
@@ -258,9 +310,11 @@ function CotizacionNueva() {
               <span>Alto (cm)</span>
               <input
                 type="number"
-                min="0"
+                min={MIN_CM}
+                max={MAX_CM}
                 step="0.1"
                 value={draft.alto_cm}
+                onKeyDown={blockExponentKey}
                 onChange={changeDraft("alto_cm")}
               />
             </label>
@@ -271,6 +325,7 @@ function CotizacionNueva() {
                 min="1"
                 step="1"
                 value={draft.cantidad}
+                onKeyDown={blockExponentKey}
                 onChange={changeDraft("cantidad")}
               />
             </label>
@@ -280,45 +335,9 @@ function CotizacionNueva() {
               </button>
             </div>
           </div>
-
-          {ventanas.length === 0 ? (
-            <p className="muted">Aún no has agregado ventanas.</p>
-          ) : (
-            <table className="table table-inner">
-              <thead>
-                <tr>
-                  <th>Tipo</th>
-                  <th>Color</th>
-                  <th>Vidrio</th>
-                  <th>Medidas (cm)</th>
-                  <th>Cant.</th>
-                  <th className="col-actions"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {ventanas.map((v, i) => (
-                  <tr key={i}>
-                    <td>{labels.tipo[v.tipo] || v.tipo}</td>
-                    <td>{labels.color[v.color] || v.color}</td>
-                    <td>{labels.vidrio[v.vidrio] || v.vidrio}</td>
-                    <td>
-                      {v.ancho_cm} × {v.alto_cm}
-                    </td>
-                    <td>{v.cantidad}</td>
-                    <td className="col-actions">
-                      <button
-                        type="button"
-                        className="btn btn-danger btn-sm"
-                        onClick={() => removeVentana(i)}
-                      >
-                        Quitar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <p className="muted small">
+            Las dimensiones deben estar entre {MIN_CM} y {MAX_CM} cm.
+          </p>
         </div>
 
         {/* Comentarios y monto */}
@@ -328,6 +347,7 @@ function CotizacionNueva() {
             <span>Comentarios</span>
             <textarea
               rows="3"
+              maxLength={1000}
               value={comentarios}
               onChange={(e) => setComentarios(e.target.value)}
             />
@@ -339,13 +359,57 @@ function CotizacionNueva() {
               min="0"
               step="1"
               value={montoAgregado}
+              onKeyDown={blockExponentKey}
               onChange={(e) => setMontoAgregado(e.target.value)}
             />
           </label>
-          <p className="muted">
-            El total se calculará automáticamente cuando se definan los precios de
-            materiales y transporte.
-          </p>
+        </div>
+        </div>
+
+        {/* Ventanas agregadas (columna derecha) */}
+        <aside className="cotizacion-side">
+          <div className="panel">
+            <h2>Ventanas agregadas ({ventanas.length})</h2>
+            {ventanas.length === 0 ? (
+              <p className="muted">Aún no has agregado ventanas.</p>
+            ) : (
+              <table className="table table-inner">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Color</th>
+                    <th>Vidrio</th>
+                    <th>Medidas</th>
+                    <th>Cant.</th>
+                    <th className="col-actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ventanas.map((v, i) => (
+                    <tr key={i}>
+                      <td>{labels.tipo[v.tipo] || v.tipo}</td>
+                      <td>{labels.color[v.color] || v.color}</td>
+                      <td>{labels.vidrio[v.vidrio] || v.vidrio}</td>
+                      <td>
+                        {v.ancho_cm}×{v.alto_cm}
+                      </td>
+                      <td>{v.cantidad}</td>
+                      <td className="col-actions">
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          onClick={() => removeVentana(i)}
+                        >
+                          Quitar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </aside>
         </div>
 
         {error && <p className="form-error">{error}</p>}

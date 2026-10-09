@@ -29,6 +29,22 @@ export function AuthProvider({ children }) {
     loadUser();
   }, [loadUser]);
 
+  // Sincroniza la sesión entre pestañas: si en otra pestaña se cierra sesión
+  // (se borra el token) o se inicia una nueva, esta pestaña se actualiza.
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === ACCESS_TOKEN) {
+        if (e.newValue) {
+          loadUser();
+        } else {
+          setUser(null);
+        }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [loadUser]);
+
   const login = async (username, password) => {
     const res = await api.post("/api/token/", { username, password });
     localStorage.setItem(ACCESS_TOKEN, res.data.access);

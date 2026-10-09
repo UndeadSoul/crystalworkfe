@@ -51,6 +51,14 @@ function App() {
               }
             />
             <Route
+              path="/cotizaciones/:id/editar"
+              element={
+                <ProtectedRoute>
+                  <CotizacionNueva />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/cotizaciones/:id"
               element={
                 <ProtectedRoute>

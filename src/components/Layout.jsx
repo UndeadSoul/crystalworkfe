@@ -34,8 +34,8 @@ function Layout() {
               <NavLink to="/" end>
                 Inicio
               </NavLink>
-              <a href="#que-hacemos">Qué hacemos</a>
-              <a href="#trabaja">Trabaja con nosotros</a>
+              <Link to="/#que-hacemos">Qué hacemos</Link>
+              <Link to="/#trabaja">Trabaja con nosotros</Link>
             </>
           )}
         </nav>
@@ -44,8 +44,10 @@ function Layout() {
           {user ? (
             <>
               <span className="user-chip">
-                {user.username}
-                <span className="user-role">{roleLabel(user)}</span>
+                {user.empresa_nombre || roleLabel(user)}
+                {user.empresa_nombre && (
+                  <span className="user-role">{roleLabel(user)}</span>
+                )}
               </span>
               <button className="btn btn-ghost" onClick={handleLogout}>
                 Salir

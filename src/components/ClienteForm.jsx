@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatRut, isValidRut } from "../utils/rut";
 
 const EMPTY = { nombre: "", rut: "", telefono: "", email: "", direccion: "" };
 
@@ -12,8 +13,17 @@ function ClienteForm({ initial, onSubmit, onClose }) {
   const change = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  const changeRut = (e) =>
+    setForm((prev) => ({ ...prev, rut: formatRut(e.target.value) }));
+
+  const rutInvalido = Boolean(form.rut) && !isValidRut(form.rut);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (rutInvalido) {
+      setError("El RUT no es válido.");
+      return;
+    }
     setError("");
     setSaving(true);
     try {
@@ -49,28 +59,40 @@ function ClienteForm({ initial, onSubmit, onClose }) {
 
         <label className="field">
           <span>Nombre *</span>
-          <input value={form.nombre} onChange={change("nombre")} required />
+          <input value={form.nombre} onChange={change("nombre")} maxLength={100} required />
         </label>
 
         <div className="field-row">
           <label className="field">
             <span>RUT</span>
-            <input value={form.rut} onChange={change("rut")} />
+            <input
+              value={form.rut}
+              onChange={changeRut}
+              maxLength={12}
+              placeholder="12.345.678-9"
+              aria-invalid={rutInvalido}
+            />
+            {rutInvalido && <small className="field-error">RUT inválido</small>}
           </label>
           <label className="field">
             <span>Teléfono</span>
-            <input value={form.telefono} onChange={change("telefono")} />
+            <input value={form.telefono} onChange={change("telefono")} maxLength={30} />
           </label>
         </div>
 
         <label className="field">
           <span>Email</span>
-          <input type="email" value={form.email} onChange={change("email")} />
+          <input
+            type="email"
+            value={form.email}
+            onChange={change("email")}
+            maxLength={100}
+          />
         </label>
 
         <label className="field">
           <span>Dirección</span>
-          <input value={form.direccion} onChange={change("direccion")} />
+          <input value={form.direccion} onChange={change("direccion")} maxLength={100} />
         </label>
 
         {error && <p className="form-error">{error}</p>}

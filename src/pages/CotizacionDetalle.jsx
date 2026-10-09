@@ -86,6 +86,11 @@ function CotizacionDetalle() {
         </div>
         <div className="actions">
           <span className={ESTADO_CLASS[cot.estado]}>{cot.estado_display}</span>
+          {cot.estado === "PENDIENTE" && (
+            <Link to={`/cotizaciones/${cot.id}/editar`} className="btn btn-ghost btn-sm">
+              Editar
+            </Link>
+          )}
           {puedeResolver && (
             <>
               <button

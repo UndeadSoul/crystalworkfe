@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { getCliente, updateCliente, deleteCliente } from "../services/clientes";
+import { Link, useParams } from "react-router-dom";
+import { getCliente, updateCliente } from "../services/clientes";
 import { listProyectos, ESTADO_PROD_CLASS } from "../services/proyectos";
 import { formatCLP, formatFecha } from "../utils/format";
 import ClienteForm from "../components/ClienteForm";
@@ -16,7 +16,6 @@ function Dato({ label, children }) {
 
 function ClienteDetalle() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [cliente, setCliente] = useState(null);
   const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,12 +45,6 @@ function ClienteDetalle() {
     load();
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm(`¿Eliminar al cliente "${cliente.nombre}"?`)) return;
-    await deleteCliente(id);
-    navigate("/clientes");
-  };
-
   if (loading) return <div className="page-loading">Cargando…</div>;
   if (notFound)
     return (
@@ -74,9 +67,6 @@ function ClienteDetalle() {
         <div className="actions">
           <button className="btn btn-ghost" onClick={() => setEditing(true)}>
             Editar
-          </button>
-          <button className="btn btn-danger" onClick={handleDelete}>
-            Eliminar
           </button>
         </div>
       </header>

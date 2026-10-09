@@ -22,6 +22,13 @@ export function formatFecha(iso) {
   }
 }
 
+// Bloquea caracteres como "e", "E", "+", "-" en inputs numéricos.
+export function blockExponentKey(e) {
+  if (["e", "E", "+", "-"].includes(e.key)) {
+    e.preventDefault();
+  }
+}
+
 export const ESTADO_CLASS = {
   PENDIENTE: "badge badge-warning",
   APROBADA: "badge badge-success",

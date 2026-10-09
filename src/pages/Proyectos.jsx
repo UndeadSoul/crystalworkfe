@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   listProyectos,
   ESTADOS_PRODUCCION,
   ESTADO_PROD_CLASS,
+  ESTADO_PAGO_CLASS,
 } from "../services/proyectos";
 import { formatCLP, formatFecha } from "../utils/format";
 
 function Proyectos() {
+  const navigate = useNavigate();
   const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [estado, setEstado] = useState("");
@@ -65,34 +67,34 @@ function Proyectos() {
                 <th>#</th>
                 <th>Cliente</th>
                 <th>Estado</th>
+                <th>Pago</th>
                 <th>Ventanas</th>
                 <th>Total</th>
                 <th>Creado</th>
-                <th className="col-actions"></th>
               </tr>
             </thead>
             <tbody>
               {proyectos.map((p) => (
-                <tr key={p.id}>
-                  <td>
-                    <Link to={`/proyectos/${p.id}`} className="row-link">
-                      #{p.id}
-                    </Link>
-                  </td>
+                <tr
+                  key={p.id}
+                  className="clickable-row"
+                  onClick={() => navigate(`/proyectos/${p.id}`)}
+                >
+                  <td>#{p.id}</td>
                   <td>{p.cliente_nombre}</td>
                   <td>
                     <span className={ESTADO_PROD_CLASS[p.estado_produccion]}>
                       {p.estado_display}
                     </span>
                   </td>
+                  <td>
+                    <span className={ESTADO_PAGO_CLASS[p.estado_pago]}>
+                      {p.estado_pago_display}
+                    </span>
+                  </td>
                   <td>{p.n_ventanas}</td>
                   <td>{formatCLP(p.total)}</td>
                   <td>{formatFecha(p.fecha_creacion)}</td>
-                  <td className="col-actions">
-                    <Link to={`/proyectos/${p.id}`} className="btn btn-ghost btn-sm">
-                      Ver
-                    </Link>
-                  </td>
                 </tr>
               ))}
             </tbody>

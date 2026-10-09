@@ -330,6 +330,16 @@ h3 {
   margin: 0 0 14px;
 }
 
+.field-error {
+  color: var(--danger);
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+
+.field input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
 /* ---------- Pages / panels ---------- */
 .page-head {
   margin-bottom: 24px;
@@ -458,6 +468,26 @@ h3 {
 
 .table tbody tr:hover {
   background: var(--surface-2);
+}
+
+/* Encabezados ordenables (hoja de corte) */
+.th-sort {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.th-sort:hover {
+  color: var(--text);
+}
+.th-sort .sort-ind {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  opacity: 0.45;
+}
+.th-sort[aria-sort="ascending"] .sort-ind,
+.th-sort[aria-sort="descending"] .sort-ind {
+  opacity: 1;
+  color: var(--accent, var(--text));
 }
 
 .row-link {
@@ -757,6 +787,33 @@ h3 {
   min-width: 90px;
 }
 
+/* ---------- Layout cotización (2 columnas) ---------- */
+.cotizacion-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.cotizacion-side {
+  position: sticky;
+  top: calc(var(--nav-h) + 16px);
+}
+
+@media (max-width: 860px) {
+  .cotizacion-grid {
+    grid-template-columns: 1fr;
+  }
+  .cotizacion-side {
+    position: static;
+  }
+}
+
+/* Filas clickeables (listas tipo proyectos) */
+.clickable-row {
+  cursor: pointer;
+}
+
 /* ---------- Footer de formulario ---------- */
 .form-footer {
   display: flex;
@@ -851,6 +908,34 @@ h3 {
 .table-compact td {
   padding: 8px 12px;
   font-size: 0.9rem;
+}
+
+.cell-input {
+  width: 110px;
+  max-width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.cell-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.valor-ro {
+  padding: 6px 0;
+  font-weight: 500;
+}
+
+h4.sub {
+  margin: 16px 0 6px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
 }
 
 .muted.small,

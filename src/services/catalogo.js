@@ -13,10 +13,6 @@ function crud(base) {
 export const seriesApi = crud("/api/catalogo/series/");
 export const perfilSerieApi = crud("/api/catalogo/perfiles-serie/");
 export const precioSerieApi = crud("/api/catalogo/precios-serie/");
-export const perfilIndividualApi = crud("/api/catalogo/perfiles-individuales/");
-export const precioPerfilIndividualApi = crud(
-  "/api/catalogo/precios-perfil-individual/"
-);
 export const planchaApi = crud("/api/catalogo/planchas/");
 export const insumoApi = crud("/api/catalogo/insumos/");
 

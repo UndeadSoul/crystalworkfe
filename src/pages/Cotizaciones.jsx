@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { listCotizaciones } from "../services/cotizaciones";
 import { ESTADO_CLASS, formatCLP, formatFecha } from "../utils/format";
 
@@ -11,6 +11,7 @@ const ESTADOS = [
 ];
 
 function Cotizaciones() {
+  const navigate = useNavigate();
   const [cotizaciones, setCotizaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [estado, setEstado] = useState("");
@@ -74,17 +75,16 @@ function Cotizaciones() {
                 <th>Total</th>
                 <th>Fecha</th>
                 <th>Ingresada por</th>
-                <th className="col-actions"></th>
               </tr>
             </thead>
             <tbody>
               {cotizaciones.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link to={`/cotizaciones/${c.id}`} className="row-link">
-                      #{c.id}
-                    </Link>
-                  </td>
+                <tr
+                  key={c.id}
+                  className="clickable-row"
+                  onClick={() => navigate(`/cotizaciones/${c.id}`)}
+                >
+                  <td>#{c.id}</td>
                   <td>{c.cliente_nombre}</td>
                   <td>
                     <span className={ESTADO_CLASS[c.estado]}>{c.estado_display}</span>
@@ -93,11 +93,6 @@ function Cotizaciones() {
                   <td>{formatCLP(c.total)}</td>
                   <td>{formatFecha(c.fecha_ingreso)}</td>
                   <td>{c.empleado_nombre}</td>
-                  <td className="col-actions">
-                    <Link to={`/cotizaciones/${c.id}`} className="btn btn-ghost btn-sm">
-                      Ver
-                    </Link>
-                  </td>
                 </tr>
               ))}
             </tbody>

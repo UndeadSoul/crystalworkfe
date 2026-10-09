@@ -12,6 +12,10 @@ export function createCotizacion(data) {
   return api.post("/api/cotizaciones/", data).then((r) => r.data);
 }
 
+export function updateCotizacion(id, data) {
+  return api.put(`/api/cotizaciones/${id}/`, data).then((r) => r.data);
+}
+
 export function getOpcionesCotizacion() {
   return api.get("/api/cotizaciones/opciones/").then((r) => r.data);
 }
