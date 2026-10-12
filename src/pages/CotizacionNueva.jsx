@@ -10,15 +10,15 @@ import { listClientes, createCliente } from "../services/clientes";
 import { blockExponentKey } from "../utils/format";
 import ClienteForm from "../components/ClienteForm";
 
-const MIN_CM = 30;
-const MAX_CM = 250;
+const MIN_MM = 300;
+const MAX_MM = 2500;
 
 const EMPTY_DRAFT = {
   tipo: "",
   color: "",
   vidrio: "",
-  ancho_cm: "",
-  alto_cm: "",
+  ancho_mm: "",
+  alto_mm: "",
   cantidad: 1,
 };
 
@@ -46,6 +46,10 @@ function CotizacionNueva() {
   const [ventanas, setVentanas] = useState([]);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
 
+  // Aplicar en bloque color/vidrio a todas las ventanas agregadas.
+  const [bulkColor, setBulkColor] = useState("");
+  const [bulkVidrio, setBulkVidrio] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -58,6 +62,8 @@ function CotizacionNueva() {
         color: o.colores[0]?.value || "",
         vidrio: o.vidrios_disponibles[0]?.value || "",
       }));
+      setBulkColor(o.colores[0]?.value || "");
+      setBulkVidrio(o.vidrios_disponibles[0]?.value || "");
     });
     listClientes().then(setClientes);
   }, []);
@@ -77,8 +83,8 @@ function CotizacionNueva() {
           tipo: v.tipo,
           color: v.color,
           vidrio: v.vidrio,
-          ancho_cm: v.ancho_cm,
-          alto_cm: v.alto_cm,
+          ancho_mm: v.ancho_mm,
+          alto_mm: v.alto_mm,
           cantidad: v.cantidad,
         }))
       );
@@ -104,20 +110,29 @@ function CotizacionNueva() {
       setError("Selecciona tipo, color y vidrio de la ventana.");
       return;
     }
-    const a = Number(draft.ancho_cm);
-    const h = Number(draft.alto_cm);
-    if (!(a >= MIN_CM && a <= MAX_CM) || !(h >= MIN_CM && h <= MAX_CM)) {
-      setError(`Las dimensiones deben estar entre ${MIN_CM} y ${MAX_CM} cm.`);
+    const a = parseInt(draft.ancho_mm, 10);
+    const h = parseInt(draft.alto_mm, 10);
+    if (!(a >= MIN_MM && a <= MAX_MM) || !(h >= MIN_MM && h <= MAX_MM)) {
+      setError(`Las dimensiones deben estar entre ${MIN_MM} y ${MAX_MM} mm.`);
       return;
     }
     const cantidad = Math.max(1, parseInt(draft.cantidad, 10) || 1);
-    setVentanas((prev) => [...prev, { ...draft, cantidad }]);
+    setVentanas((prev) => [...prev, { ...draft, ancho_mm: a, alto_mm: h, cantidad }]);
     // Mantiene tipo/color/vidrio del anterior; limpia dimensiones.
-    setDraft((d) => ({ ...d, ancho_cm: "", alto_cm: "", cantidad: 1 }));
+    setDraft((d) => ({ ...d, ancho_mm: "", alto_mm: "", cantidad: 1 }));
   };
 
   const removeVentana = (index) =>
     setVentanas((prev) => prev.filter((_, i) => i !== index));
+
+  const aplicarColorATodas = () => {
+    if (!bulkColor) return;
+    setVentanas((prev) => prev.map((v) => ({ ...v, color: bulkColor })));
+  };
+  const aplicarVidrioATodas = () => {
+    if (!bulkVidrio) return;
+    setVentanas((prev) => prev.map((v) => ({ ...v, vidrio: bulkVidrio })));
+  };
 
   const handleNuevoCliente = async (data) => {
     const nuevo = await createCliente(data);
@@ -156,8 +171,8 @@ function CotizacionNueva() {
           tipo: v.tipo,
           color: v.color,
           vidrio: v.vidrio,
-          ancho_cm: v.ancho_cm,
-          alto_cm: v.alto_cm,
+          ancho_mm: v.ancho_mm,
+          alto_mm: v.alto_mm,
           cantidad: v.cantidad,
         })),
       };
@@ -294,41 +309,43 @@ function CotizacionNueva() {
                 ))}
               </select>
             </label>
-            <label className="field field-sm">
-              <span>Ancho (cm)</span>
-              <input
-                type="number"
-                min={MIN_CM}
-                max={MAX_CM}
-                step="0.1"
-                value={draft.ancho_cm}
-                onKeyDown={blockExponentKey}
-                onChange={changeDraft("ancho_cm")}
-              />
-            </label>
-            <label className="field field-sm">
-              <span>Alto (cm)</span>
-              <input
-                type="number"
-                min={MIN_CM}
-                max={MAX_CM}
-                step="0.1"
-                value={draft.alto_cm}
-                onKeyDown={blockExponentKey}
-                onChange={changeDraft("alto_cm")}
-              />
-            </label>
-            <label className="field field-sm">
-              <span>Cant.</span>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={draft.cantidad}
-                onKeyDown={blockExponentKey}
-                onChange={changeDraft("cantidad")}
-              />
-            </label>
+            <div className="dims-row">
+              <label className="field field-sm">
+                <span>Ancho (mm)</span>
+                <input
+                  type="number"
+                  min={MIN_MM}
+                  max={MAX_MM}
+                  step="1"
+                  value={draft.ancho_mm}
+                  onKeyDown={blockExponentKey}
+                  onChange={changeDraft("ancho_mm")}
+                />
+              </label>
+              <label className="field field-sm">
+                <span>Alto (mm)</span>
+                <input
+                  type="number"
+                  min={MIN_MM}
+                  max={MAX_MM}
+                  step="1"
+                  value={draft.alto_mm}
+                  onKeyDown={blockExponentKey}
+                  onChange={changeDraft("alto_mm")}
+                />
+              </label>
+              <label className="field field-sm">
+                <span>Cant.</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={draft.cantidad}
+                  onKeyDown={blockExponentKey}
+                  onChange={changeDraft("cantidad")}
+                />
+              </label>
+            </div>
             <div className="field field-btn">
               <button type="button" className="btn btn-primary" onClick={addVentana}>
                 Agregar
@@ -336,7 +353,7 @@ function CotizacionNueva() {
             </div>
           </div>
           <p className="muted small">
-            Las dimensiones deben estar entre {MIN_CM} y {MAX_CM} cm.
+            Las dimensiones deben estar entre {MIN_MM} y {MAX_MM} mm.
           </p>
         </div>
 
@@ -373,6 +390,54 @@ function CotizacionNueva() {
             {ventanas.length === 0 ? (
               <p className="muted">Aún no has agregado ventanas.</p>
             ) : (
+              <>
+              <div className="bulk-apply">
+                <div className="bulk-row">
+                  <label className="field">
+                    <span>Color para todas</span>
+                    <select
+                      value={bulkColor}
+                      onChange={(e) => setBulkColor(e.target.value)}
+                    >
+                      {opciones.colores.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={aplicarColorATodas}
+                  >
+                    Aplicar
+                  </button>
+                </div>
+                <div className="bulk-row">
+                  <label className="field">
+                    <span>Vidrio para todas</span>
+                    <select
+                      value={bulkVidrio}
+                      onChange={(e) => setBulkVidrio(e.target.value)}
+                    >
+                      {opciones.vidrios_disponibles.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={aplicarVidrioATodas}
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+              <div className="table-scroll">
               <table className="table table-inner">
                 <thead>
                   <tr>
@@ -391,7 +456,7 @@ function CotizacionNueva() {
                       <td>{labels.color[v.color] || v.color}</td>
                       <td>{labels.vidrio[v.vidrio] || v.vidrio}</td>
                       <td>
-                        {v.ancho_cm}×{v.alto_cm}
+                        {v.ancho_mm}×{v.alto_mm}
                       </td>
                       <td>{v.cantidad}</td>
                       <td className="col-actions">
@@ -407,6 +472,8 @@ function CotizacionNueva() {
                   ))}
                 </tbody>
               </table>
+              </div>
+              </>
             )}
           </div>
         </aside>

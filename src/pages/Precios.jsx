@@ -7,9 +7,11 @@ import {
   insumoApi,
   getConfigEmpresa,
   updateConfigEmpresa,
+  getCambiosPrecios,
 } from "../services/catalogo";
 import { getOpcionesCotizacion } from "../services/cotizaciones";
 import CatalogModal from "../components/CatalogModal";
+import CambiosModal from "../components/CambiosModal";
 import { blockExponentKey, formatCLP } from "../utils/format";
 
 const TABS = [
@@ -268,6 +270,7 @@ function AluminioTab({ onEditing }) {
           </label>
 
           <h4 className="sub">Perfiles (peso y largo de tira)</h4>
+          <div className="table-scroll">
           <table className="table table-compact">
             <thead>
               <tr>
@@ -306,8 +309,10 @@ function AluminioTab({ onEditing }) {
               ))}
             </tbody>
           </table>
+          </div>
 
           <h4 className="sub">Precios por color (paquete)</h4>
+          <div className="table-scroll">
           <table className="table table-compact">
             <thead>
               <tr>
@@ -330,6 +335,7 @@ function AluminioTab({ onEditing }) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       ))}
     </div>
@@ -433,6 +439,7 @@ function VidriosTab({ vidrios, onEditing }) {
         </div>
       </div>
 
+      <div className="table-scroll">
       <table className="table table-compact">
         <thead>
           <tr>
@@ -487,6 +494,7 @@ function VidriosTab({ vidrios, onEditing }) {
           ))}
         </tbody>
       </table>
+      </div>
 
       {modal && (
         <CatalogModal
@@ -586,6 +594,7 @@ function InsumosTab({ onEditing }) {
       <p className="muted small">
         Costo usado = precio × cantidad / cantidad del paquete.
       </p>
+      <div className="table-scroll">
       <table className="table table-compact">
         <thead>
           <tr>
@@ -624,6 +633,7 @@ function InsumosTab({ onEditing }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -633,6 +643,7 @@ function Precios() {
   const [tab, setTab] = useState("general");
   const [opciones, setOpciones] = useState({ colores: [], vidrios: [] });
   const [editingTabs, setEditingTabs] = useState({});
+  const [cambiosOpen, setCambiosOpen] = useState(false);
 
   const dirty = Object.values(editingTabs).some(Boolean);
 
@@ -670,12 +681,23 @@ function Precios() {
 
   return (
     <div className="page">
-      <header className="page-head">
-        <h1>Precios y catálogo</h1>
-        <p className="page-sub">
-          Pulsa <strong>Editar</strong> en cada sección para modificar todos sus
-          valores a la vez.
-        </p>
+      <header className="page-head page-head-row">
+        <div>
+          <h1>Precios y catálogo</h1>
+          <p className="page-sub">
+            Pulsa <strong>Editar</strong> en cada sección para modificar todos sus
+            valores a la vez.
+          </p>
+        </div>
+        <div className="actions">
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setCambiosOpen(true)}
+          >
+            Control de cambios
+          </button>
+        </div>
       </header>
 
       <div className="tabs">
@@ -696,6 +718,14 @@ function Precios() {
         <VidriosTab vidrios={opciones.vidrios} onEditing={onEditingByTab.vidrios} />
       )}
       {tab === "insumos" && <InsumosTab onEditing={onEditingByTab.insumos} />}
+
+      {cambiosOpen && (
+        <CambiosModal
+          title="Control de cambios · Precios"
+          cargar={getCambiosPrecios}
+          onClose={() => setCambiosOpen(false)}
+        />
+      )}
     </div>
   );
 }

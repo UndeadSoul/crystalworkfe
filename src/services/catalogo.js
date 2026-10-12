@@ -23,3 +23,7 @@ export function getConfigEmpresa() {
 export function updateConfigEmpresa(data) {
   return api.put("/api/catalogo/empresa/", data).then((r) => r.data);
 }
+
+export function getCambiosPrecios() {
+  return api.get("/api/catalogo/cambios/").then((r) => r.data);
+}

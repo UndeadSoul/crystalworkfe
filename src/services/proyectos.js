@@ -16,6 +16,10 @@ export function getHojaCorte(id) {
   return api.get(`/api/proyectos/${id}/hoja-corte/`).then((r) => r.data);
 }
 
+export function getProyectoCambios(id) {
+  return api.get(`/api/proyectos/${id}/cambios/`).then((r) => r.data);
+}
+
 export const ESTADOS_PRODUCCION = [
   { value: "POR_INICIAR", label: "Por iniciar" },
   { value: "EN_FABRICACION", label: "En fabricación" },

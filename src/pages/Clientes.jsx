@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listClientes, createCliente, updateCliente } from "../services/clientes";
+import { listClientes, createCliente } from "../services/clientes";
 import ClienteForm from "../components/ClienteForm";
 
 function Clientes() {
@@ -8,7 +8,7 @@ function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState(null); // null | {} (nuevo) | cliente (editar)
+  const [modal, setModal] = useState(null); // null | {} (nuevo cliente)
   const [error, setError] = useState("");
 
   const load = useCallback(async (term) => {
@@ -30,11 +30,7 @@ function Clientes() {
   }, [search, load]);
 
   const handleSubmit = async (data) => {
-    if (modal && modal.id) {
-      await updateCliente(modal.id, data);
-    } else {
-      await createCliente(data);
-    }
+    await createCliente(data);
     setModal(null);
     load(search);
   };
@@ -67,6 +63,7 @@ function Clientes() {
             {search ? "Sin resultados." : "Aún no hay clientes. Crea el primero."}
           </p>
         ) : (
+          <div className="table-scroll">
           <table className="table">
             <thead>
               <tr>
@@ -74,7 +71,6 @@ function Clientes() {
                 <th>RUT</th>
                 <th>Teléfono</th>
                 <th>Email</th>
-                <th className="col-actions"></th>
               </tr>
             </thead>
             <tbody>
@@ -88,21 +84,11 @@ function Clientes() {
                   <td>{c.rut || "—"}</td>
                   <td>{c.telefono || "—"}</td>
                   <td>{c.email || "—"}</td>
-                  <td className="col-actions">
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setModal(c);
-                      }}
-                    >
-                      Editar
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

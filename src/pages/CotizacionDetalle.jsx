@@ -129,13 +129,14 @@ function CotizacionDetalle() {
         <div className="pad">
           <h2>Ventanas ({cot.ventanas.length})</h2>
         </div>
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
               <th>Tipo</th>
               <th>Color</th>
               <th>Vidrio</th>
-              <th>Medidas (cm)</th>
+              <th>Medidas (mm)</th>
               <th>Cant.</th>
               <th>Precio unit.</th>
               <th>Subtotal</th>
@@ -148,7 +149,7 @@ function CotizacionDetalle() {
                 <td>{v.color_display}</td>
                 <td>{v.vidrio_display}</td>
                 <td>
-                  {v.ancho_cm} × {v.alto_cm}
+                  {v.ancho_mm} × {v.alto_mm}
                 </td>
                 <td>{v.cantidad}</td>
                 <td>
@@ -163,6 +164,7 @@ function CotizacionDetalle() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="panel">
@@ -173,7 +175,11 @@ function CotizacionDetalle() {
           {cot.requiere_transporte && (
             <Dato label="Transporte">{formatCLP(cot.costo_transporte)}</Dato>
           )}
-          <Dato label="Total">{formatCLP(cot.total)}</Dato>
+          <Dato label="Neto">{formatCLP(cot.total)}</Dato>
+          <Dato label="IVA (19%)">{formatCLP(cot.iva)}</Dato>
+          <Dato label="Total (bruto)">
+            <strong>{formatCLP(cot.total_bruto)}</strong>
+          </Dato>
         </div>
         {cot.ventanas.some((v) => !v.precio_calculado) && (
           <p className="muted">

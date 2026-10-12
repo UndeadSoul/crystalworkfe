@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { listCotizaciones } from "../services/cotizaciones";
 import { ESTADO_CLASS, formatCLP, formatFecha } from "../utils/format";
 
@@ -12,9 +12,11 @@ const ESTADOS = [
 
 function Cotizaciones() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [cotizaciones, setCotizaciones] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [estado, setEstado] = useState("");
+  // Permite enlazar con filtro aplicado: /cotizaciones?estado=PENDIENTE
+  const [estado, setEstado] = useState(searchParams.get("estado") || "");
   const [error, setError] = useState("");
 
   const load = useCallback(async (filtroEstado) => {
@@ -65,6 +67,7 @@ function Cotizaciones() {
         ) : cotizaciones.length === 0 ? (
           <p className="muted pad">No hay cotizaciones.</p>
         ) : (
+          <div className="table-scroll">
           <table className="table">
             <thead>
               <tr>
@@ -72,7 +75,7 @@ function Cotizaciones() {
                 <th>Cliente</th>
                 <th>Estado</th>
                 <th>Ventanas</th>
-                <th>Total</th>
+                <th>Total (c/IVA)</th>
                 <th>Fecha</th>
                 <th>Ingresada por</th>
               </tr>
@@ -90,13 +93,14 @@ function Cotizaciones() {
                     <span className={ESTADO_CLASS[c.estado]}>{c.estado_display}</span>
                   </td>
                   <td>{c.n_ventanas}</td>
-                  <td>{formatCLP(c.total)}</td>
+                  <td>{formatCLP(c.total_bruto)}</td>
                   <td>{formatFecha(c.fecha_ingreso)}</td>
                   <td>{c.empleado_nombre}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

@@ -13,6 +13,18 @@
   --primary-hover: #1d4ed8;
   --primary-soft: #dbeafe;
   --danger: #dc2626;
+  /* Paleta de estado para gráficos (rellenos sólidos, siempre con etiqueta) */
+  --c-warning: #d97706;
+  --c-success: #16a34a;
+  --c-danger: #dc2626;
+  --c-neutral: #64748b;
+  --c-info: #0284c7;
+  /* Paleta categórica (validada dataviz) para gráficos por categoría */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
   --radius: 12px;
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
   --nav-h: 64px;
@@ -29,6 +41,16 @@
     --primary: #3b82f6;
     --primary-hover: #60a5fa;
     --primary-soft: #1e3a5f;
+    --c-warning: #f59e0b;
+    --c-success: #22c55e;
+    --c-danger: #ef4444;
+    --c-neutral: #94a3b8;
+    --c-info: #38bdf8;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 }
@@ -383,22 +405,87 @@ h3 {
   color: var(--text-muted);
 }
 
+/* Botón hamburguesa (oculto en escritorio) */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.nav-toggle span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  margin: 0 auto;
+  background: var(--text);
+  border-radius: 2px;
+}
+
+/* Acciones dentro del menú lateral (solo móvil) */
+.nav-links-actions {
+  display: none;
+}
+
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 20;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 720px) {
   .navbar {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 12px 16px;
     gap: 12px;
   }
 
-  .nav-links {
-    order: 3;
-    width: 100%;
-    overflow-x: auto;
+  .nav-toggle {
+    display: flex;
   }
 
-  .user-chip {
+  /* Menú lateral deslizable */
+  .nav-links {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: min(78vw, 280px);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 72px 16px 24px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.18);
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    z-index: 30;
+    overflow-y: auto;
+  }
+  .nav-links.open {
+    transform: translateX(0);
+  }
+  .nav-links a {
+    font-size: 1.05rem;
+    padding: 12px 14px;
+  }
+
+  .nav-links-actions {
+    display: block;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* El bloque de acciones del navbar se reemplaza por el del menú */
+  .nav-actions {
     display: none;
   }
 }
@@ -490,6 +577,17 @@ h3 {
   color: var(--accent, var(--text));
 }
 
+/* Contenedor con scroll horizontal para tablas (móvil) */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll .table th,
+.table-scroll .table td {
+  white-space: nowrap;
+}
+
 .row-link {
   color: var(--primary);
   font-weight: 600;
@@ -552,6 +650,10 @@ h3 {
   padding: 24px;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.modal-wide {
+  max-width: 760px;
 }
 
 .modal-head {
@@ -787,17 +889,70 @@ h3 {
   min-width: 90px;
 }
 
+/* Ancho / Alto / Cant. siempre juntos en una fila */
+.dims-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex: 1 1 100%;
+}
+.dims-row .field {
+  margin-bottom: 0;
+}
+.dims-row .field-sm {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ---------- Layout cotización (2 columnas) ---------- */
 .cotizacion-grid {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 1.3fr 1fr;
   gap: 18px;
   align-items: start;
+}
+
+/* min-width:0 evita que una tabla ancha (scroll) expanda su columna y
+   contraiga la otra; el ancho lo absorbe .table-scroll, no la grilla. */
+.cotizacion-main,
+.cotizacion-side {
+  min-width: 0;
 }
 
 .cotizacion-side {
   position: sticky;
   top: calc(var(--nav-h) + 16px);
+}
+
+/* En escritorio la tabla del side debe mostrar toda la info sin scroll
+   horizontal: el texto se ajusta (en vez de nowrap) y se compacta. */
+.cotizacion-side .table th,
+.cotizacion-side .table td {
+  white-space: normal;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  vertical-align: top;
+}
+
+/* Aplicar color/vidrio a todas las ventanas */
+.bulk-apply {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.bulk-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+.bulk-row .field {
+  flex: 1;
+  margin-bottom: 0;
 }
 
 @media (max-width: 860px) {
@@ -897,8 +1052,10 @@ h3 {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
+.crud-head h2,
 .crud-head h3,
 .crud-head h4 {
   margin: 0;
@@ -981,4 +1138,233 @@ code {
 
 .pendientes-list a:hover {
   text-decoration: underline;
+}
+
+/* ---------- Dashboard / analítica ---------- */
+.page > .stat-grid,
+.page > .panel-grid,
+.page > .panel {
+  margin-bottom: 18px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.stat-tile-link {
+  transition: border-color 0.15s, transform 0.15s;
+}
+.stat-tile-link:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.stat-valor {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text);
+}
+.stat-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.stat-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Barras horizontales */
+.barras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.barra-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 40%) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+.barra-label {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.barra-track {
+  background: var(--surface-2);
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+}
+.barra-fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+.barra-valor {
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Control segmentado (toggles del dashboard) */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px;
+}
+.seg-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.seg-btn:hover {
+  color: var(--text);
+}
+.seg-btn.active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+/* Donut (composición de ventanas) */
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.donut {
+  width: 160px;
+  height: 160px;
+  flex: none;
+}
+.donut circle {
+  transition: stroke-dasharray 0.3s ease;
+}
+.donut-total {
+  font-size: 1.6rem;
+  font-weight: 800;
+  fill: var(--text);
+}
+.donut-cap {
+  font-size: 0.7rem;
+  fill: var(--text-muted);
+}
+.donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+.donut-legend .swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  flex: none;
+}
+.donut-legend .leg-label {
+  flex: 1;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.donut-legend .leg-val {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Columnas verticales (ingresos por período) */
+.columnas-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.columnas {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 200px;
+  margin-top: 8px;
+  min-width: 100%;
+}
+.columnas-densas {
+  gap: 4px;
+}
+.columnas-densas .columna-col {
+  min-width: 26px;
+}
+.columna-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  gap: 6px;
+}
+.columna-valor {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.columna-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.columna-fill {
+  width: 70%;
+  max-width: 48px;
+  min-height: 2px;
+  background: var(--primary);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s ease;
+}
+.columna-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
