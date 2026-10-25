@@ -20,10 +20,12 @@ export function getOpcionesCotizacion() {
   return api.get("/api/cotizaciones/opciones/").then((r) => r.data);
 }
 
-export function aprobarCotizacion(id) {
-  return api.post(`/api/cotizaciones/${id}/aprobar/`).then((r) => r.data);
+// `version`: la de la cotización que el usuario tiene en pantalla. Si otro
+// usuario la cambió entre medio, la API responde 409 (conflicto).
+export function aprobarCotizacion(id, version) {
+  return api.post(`/api/cotizaciones/${id}/aprobar/`, { version }).then((r) => r.data);
 }
 
-export function rechazarCotizacion(id) {
-  return api.post(`/api/cotizaciones/${id}/rechazar/`).then((r) => r.data);
+export function rechazarCotizacion(id, version) {
+  return api.post(`/api/cotizaciones/${id}/rechazar/`, { version }).then((r) => r.data);
 }

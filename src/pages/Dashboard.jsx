@@ -4,7 +4,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { roleLabel } from "../utils/roles";
 import { getResumen, getIngresos, RANGOS_INGRESOS } from "../services/analytics";
 import { listCotizaciones } from "../services/cotizaciones";
-import { formatCLP, formatFecha } from "../utils/format";
+import { formatCLP, formatFechaHora } from "../utils/format";
+import { Loader } from "../components/Loader";
 
 // Color semántico (paleta de badges) por valor de estado.
 const COLOR_ESTADO = {
@@ -15,6 +16,7 @@ const COLOR_ESTADO = {
   EN_FABRICACION: "var(--c-warning)",
   TERMINADO: "var(--c-success)",
   ENTREGADO: "var(--c-info)",
+  CANCELADO: "var(--c-danger)",
 };
 const COLOR_PAGO = {
   PENDIENTE: "var(--c-danger)",
@@ -200,7 +202,7 @@ function Dashboard() {
       .catch(() => setIngresos({ series: {} }));
   }, [data]);
 
-  if (loading) return <div className="page-loading">Cargando…</div>;
+  if (loading) return <Loader pagina texto="Calculando indicadores…" />;
 
   const k = data.kpis;
   const ventanas =
@@ -313,7 +315,7 @@ function Dashboard() {
             </div>
           </div>
           {ingresos === null ? (
-            <p className="muted">Cargando…</p>
+            <Loader />
           ) : (
             <Columnas items={ingresos.series?.[rango] || []} />
           )}
@@ -330,7 +332,7 @@ function Dashboard() {
                   #{c.id} · {c.cliente_nombre}
                 </Link>
                 <span className="muted small">
-                  {formatCLP(c.total_bruto)} · {formatFecha(c.fecha_ingreso)}
+                  {formatCLP(c.total_bruto)} · {formatFechaHora(c.fecha_ingreso)}
                 </span>
               </li>
             ))}

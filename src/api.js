@@ -1,17 +1,23 @@
 import axios from "axios";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constants";
+import { finPeticion, inicioPeticion } from "./utils/actividad";
+import { zonaNavegador } from "./utils/format";
 
 const baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const api = axios.create({ baseURL });
 
-// Adjunta el token de acceso a cada peticion.
+// Adjunta el token de acceso a cada peticion y la cuenta como actividad
+// (barra de carga global). Envia la zona horaria del navegador para que los
+// textos con hora que arma el servidor coincidan con los de pantalla.
 api.interceptors.request.use(
   (config) => {
+    inicioPeticion();
     const token = localStorage.getItem(ACCESS_TOKEN);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    config.headers["X-Zona-Horaria"] = zonaNavegador();
     return config;
   },
   (error) => Promise.reject(error)
@@ -22,8 +28,12 @@ api.interceptors.request.use(
 let refreshing = null;
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    finPeticion();
+    return response;
+  },
   async (error) => {
+    finPeticion();
     const original = error.config;
     const status = error.response ? error.response.status : null;
 

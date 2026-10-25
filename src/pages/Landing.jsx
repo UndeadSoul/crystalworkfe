@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { inicioPara } from "../utils/roles";
 
 function Landing() {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ function Landing() {
         </p>
         <div className="hero-actions">
           {user ? (
-            <Link to="/dashboard" className="btn btn-primary btn-lg">
+            <Link to={inicioPara(user)} className="btn btn-primary btn-lg">
               Ir al panel
             </Link>
           ) : (

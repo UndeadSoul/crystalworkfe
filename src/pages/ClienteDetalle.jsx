@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getCliente, updateCliente } from "../services/clientes";
 import { listProyectos, ESTADO_PROD_CLASS } from "../services/proyectos";
-import { formatCLP, formatFecha } from "../utils/format";
+import { formatCLP, formatFechaHora } from "../utils/format";
 import ClienteForm from "../components/ClienteForm";
+import { Loader } from "../components/Loader";
+import BotonVolver from "../components/BotonVolver";
 
 function Dato({ label, children }) {
   return (
@@ -46,14 +48,12 @@ function ClienteDetalle() {
     load();
   };
 
-  if (loading) return <div className="page-loading">Cargando…</div>;
+  if (loading) return <Loader pagina />;
   if (notFound)
     return (
       <div className="page">
         <p className="muted">Cliente no encontrado.</p>
-        <Link to="/clientes" className="link-back">
-          ← Volver a clientes
-        </Link>
+        <BotonVolver to="/clientes">Clientes</BotonVolver>
       </div>
     );
 
@@ -64,12 +64,11 @@ function ClienteDetalle() {
 
   return (
     <div className="page">
-      <Link to="/clientes" className="link-back">
-        ← Volver a clientes
-      </Link>
-
       <header className="page-head page-head-row">
-        <h1>{cliente.nombre}</h1>
+        <div className="titulo-volver">
+          <BotonVolver to="/clientes">Clientes</BotonVolver>
+          <h1>{cliente.nombre}</h1>
+        </div>
         <div className="actions">
           <button className="btn btn-ghost" onClick={() => setEditing(true)}>
             Editar
@@ -120,7 +119,7 @@ function ClienteDetalle() {
                     </span>
                   </td>
                   <td>{formatCLP(p.total_bruto)}</td>
-                  <td>{formatFecha(p.fecha_creacion)}</td>
+                  <td>{formatFechaHora(p.fecha_creacion)}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ROLES_EMPRESA } from "./utils/roles";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
@@ -13,6 +14,8 @@ import ProyectoDetalle from "./pages/ProyectoDetalle";
 import Clientes from "./pages/Clientes";
 import ClienteDetalle from "./pages/ClienteDetalle";
 import Precios from "./pages/Precios";
+import Usuarios from "./pages/Usuarios";
+import Empresas from "./pages/Empresas";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -29,7 +32,7 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <Dashboard />
                 </ProtectedRoute>
               }
@@ -37,7 +40,7 @@ function App() {
             <Route
               path="/cotizaciones"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <Cotizaciones />
                 </ProtectedRoute>
               }
@@ -45,7 +48,7 @@ function App() {
             <Route
               path="/cotizaciones/nueva"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <CotizacionNueva />
                 </ProtectedRoute>
               }
@@ -53,7 +56,7 @@ function App() {
             <Route
               path="/cotizaciones/:id/editar"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <CotizacionNueva />
                 </ProtectedRoute>
               }
@@ -61,7 +64,7 @@ function App() {
             <Route
               path="/cotizaciones/:id"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <CotizacionDetalle />
                 </ProtectedRoute>
               }
@@ -69,7 +72,7 @@ function App() {
             <Route
               path="/proyectos"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <Proyectos />
                 </ProtectedRoute>
               }
@@ -77,7 +80,7 @@ function App() {
             <Route
               path="/proyectos/:id"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <ProyectoDetalle />
                 </ProtectedRoute>
               }
@@ -85,7 +88,7 @@ function App() {
             <Route
               path="/clientes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <Clientes />
                 </ProtectedRoute>
               }
@@ -93,7 +96,7 @@ function App() {
             <Route
               path="/clientes/:id"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute roles={ROLES_EMPRESA}>
                   <ClienteDetalle />
                 </ProtectedRoute>
               }
@@ -101,8 +104,24 @@ function App() {
             <Route
               path="/precios"
               element={
-                <ProtectedRoute roles={["ADMIN", "JEFE"]}>
+                <ProtectedRoute roles={["JEFE"]}>
                   <Precios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/usuarios"
+              element={
+                <ProtectedRoute roles={["ADMIN", "JEFE"]}>
+                  <Usuarios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresas"
+              element={
+                <ProtectedRoute roles={["ADMIN"]}>
+                  <Empresas />
                 </ProtectedRoute>
               }
             />

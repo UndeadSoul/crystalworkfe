@@ -7,7 +7,12 @@ import {
 } from "../services/cotizaciones";
 import { useAuth } from "../contexts/AuthContext";
 import { roleKey, ROLES } from "../utils/roles";
-import { ESTADO_CLASS, formatCLP, formatFecha } from "../utils/format";
+import { ESTADO_CLASS, formatCLP, formatFechaHora, formatMedidas } from "../utils/format";
+import { esConflicto, parseApiError } from "../utils/errors";
+import { FormError } from "../components/FormErrors";
+import { BotonCarga, Loader } from "../components/Loader";
+import BotonVolver from "../components/BotonVolver";
+import { pdfCotizacion } from "../utils/descargas";
 
 function Dato({ label, children }) {
   return (
@@ -24,7 +29,21 @@ function CotizacionDetalle() {
   const [cot, setCot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [resolviendo, setResolviendo] = useState(false);
+  const [resolviendo, setResolviendo] = useState(null); // "aprobar" | "rechazar"
+  const [error, setError] = useState("");
+  const [exportando, setExportando] = useState(false);
+
+  const exportarPdf = async () => {
+    setError("");
+    setExportando(true);
+    try {
+      await pdfCotizacion(id);
+    } catch (err) {
+      setError(parseApiError(err, { fallback: "No se pudo generar el PDF." }).general);
+    } finally {
+      setExportando(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -37,52 +56,51 @@ function CotizacionDetalle() {
   const puedeResolver =
     cot &&
     cot.estado === "PENDIENTE" &&
-    [ROLES.ADMIN, ROLES.JEFE].includes(roleKey(user));
+    roleKey(user) === ROLES.JEFE;
 
   const resolver = async (accion) => {
     const verbo = accion === "aprobar" ? "aprobar" : "rechazar";
     if (!window.confirm(`¿Seguro que deseas ${verbo} la cotización #${cot.id}?`)) return;
-    setResolviendo(true);
+    setError("");
+    setResolviendo(accion);
     try {
       const fn = accion === "aprobar" ? aprobarCotizacion : rechazarCotizacion;
-      setCot(await fn(cot.id));
-    } catch {
-      alert("No se pudo completar la acción.");
+      // Se envía la versión en pantalla: si otro usuario la cambió, la API
+      // responde 409 y no se aprueba algo que no se vio.
+      setCot(await fn(cot.id, cot.version));
+    } catch (err) {
+      const msg = parseApiError(err, { fallback: `No se pudo ${verbo} la cotización.` }).general;
+      if (esConflicto(err)) {
+        // Se muestra la versión actual para revisarla antes de decidir.
+        setError(`${msg} Se cargó la versión actual.`);
+        try {
+          setCot(await getCotizacion(id));
+        } catch {
+          /* se mantiene el mensaje de conflicto */
+        }
+      } else {
+        setError(msg);
+      }
     } finally {
-      setResolviendo(false);
+      setResolviendo(null);
     }
   };
 
-  if (loading) return <div className="page-loading">Cargando…</div>;
+  if (loading) return <Loader pagina />;
   if (notFound)
     return (
       <div className="page">
         <p className="muted">Cotización no encontrada.</p>
-        <Link to="/cotizaciones" className="link-back">
-          ← Volver a cotizaciones
-        </Link>
+        <BotonVolver to="/cotizaciones">Cotizaciones</BotonVolver>
       </div>
     );
 
   return (
     <div className="page">
-      <Link to="/cotizaciones" className="link-back">
-        ← Volver a cotizaciones
-      </Link>
-
       <header className="page-head page-head-row">
-        <div>
+        <div className="titulo-volver">
+          <BotonVolver to="/cotizaciones">Cotizaciones</BotonVolver>
           <h1>Cotización #{cot.id}</h1>
-          <p className="page-sub">
-            {cot.cliente_nombre} · Ingresada por {cot.empleado_nombre} el{" "}
-            {formatFecha(cot.fecha_ingreso)}
-          </p>
-          {cot.estado !== "PENDIENTE" && cot.resuelta_por_nombre && (
-            <p className="page-sub">
-              {cot.estado_display} por {cot.resuelta_por_nombre} el{" "}
-              {formatFecha(cot.fecha_resolucion)}
-            </p>
-          )}
         </div>
         <div className="actions">
           <span className={ESTADO_CLASS[cot.estado]}>{cot.estado_display}</span>
@@ -91,30 +109,58 @@ function CotizacionDetalle() {
               Editar
             </Link>
           )}
+          <BotonCarga
+            className="btn btn-ghost btn-sm"
+            cargando={exportando}
+            texto="Generando PDF…"
+            onClick={exportarPdf}
+          >
+            Exportar PDF
+          </BotonCarga>
           {puedeResolver && (
             <>
-              <button
+              <BotonCarga
                 className="btn btn-primary btn-sm"
-                disabled={resolviendo}
+                cargando={resolviendo === "aprobar"}
+                disabled={resolviendo !== null}
+                texto="Aprobando…"
                 onClick={() => resolver("aprobar")}
               >
                 Aprobar
-              </button>
-              <button
+              </BotonCarga>
+              <BotonCarga
                 className="btn btn-danger btn-sm"
-                disabled={resolviendo}
+                cargando={resolviendo === "rechazar"}
+                disabled={resolviendo !== null}
+                texto="Rechazando…"
                 onClick={() => resolver("rechazar")}
               >
                 Rechazar
-              </button>
+              </BotonCarga>
             </>
           )}
         </div>
       </header>
 
+      <FormError msg={error} />
+
       <div className="panel">
-        <h2>Entrega</h2>
+        <h2>Información</h2>
         <div className="detail-grid">
+          <Dato label="Cliente">{cot.cliente_nombre}</Dato>
+          <Dato label="Ingresada por">{cot.empleado_nombre}</Dato>
+          <Dato label="Fecha de ingreso">{formatFechaHora(cot.fecha_ingreso)}</Dato>
+          {cot.estado === "PENDIENTE" && cot.modificada_por_nombre && (
+            <Dato label="Última edición">
+              {cot.modificada_por_nombre} · {formatFechaHora(cot.modificada_en)}
+            </Dato>
+          )}
+          {cot.estado !== "PENDIENTE" && cot.resuelta_por_nombre && (
+            <>
+              <Dato label={`${cot.estado_display} por`}>{cot.resuelta_por_nombre}</Dato>
+              <Dato label="Fecha de resolución">{formatFechaHora(cot.fecha_resolucion)}</Dato>
+            </>
+          )}
           <Dato label="Dirección de entrega">{cot.direccion_entrega}</Dato>
           <Dato label="Transporte e instalación">
             {cot.requiere_transporte ? "Sí" : "No"}
@@ -136,7 +182,7 @@ function CotizacionDetalle() {
               <th>Tipo</th>
               <th>Color</th>
               <th>Vidrio</th>
-              <th>Medidas (mm)</th>
+              <th>Medidas</th>
               <th>Cant.</th>
               <th>Precio unit.</th>
               <th>Subtotal</th>
@@ -149,7 +195,7 @@ function CotizacionDetalle() {
                 <td>{v.color_display}</td>
                 <td>{v.vidrio_display}</td>
                 <td>
-                  {v.ancho_mm} × {v.alto_mm}
+                  {formatMedidas(v.ancho_mm, v.alto_mm)}
                 </td>
                 <td>{v.cantidad}</td>
                 <td>

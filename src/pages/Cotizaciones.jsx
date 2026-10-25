@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { listCotizaciones } from "../services/cotizaciones";
-import { ESTADO_CLASS, formatCLP, formatFecha } from "../utils/format";
+import { ESTADO_CLASS, formatCLP, formatFechaHora } from "../utils/format";
+import { FormError } from "../components/FormErrors";
+import { Loader } from "../components/Loader";
 
 const ESTADOS = [
   { value: "", label: "Todos los estados" },
@@ -59,11 +61,11 @@ function Cotizaciones() {
         </select>
       </div>
 
-      {error && <p className="form-error">{error}</p>}
+      <FormError msg={error} />
 
       <div className="panel panel-flush">
         {loading ? (
-          <p className="muted pad">Cargando…</p>
+          <Loader texto="Cargando cotizaciones…" />
         ) : cotizaciones.length === 0 ? (
           <p className="muted pad">No hay cotizaciones.</p>
         ) : (
@@ -94,7 +96,7 @@ function Cotizaciones() {
                   </td>
                   <td>{c.n_ventanas}</td>
                   <td>{formatCLP(c.total_bruto)}</td>
-                  <td>{formatFecha(c.fecha_ingreso)}</td>
+                  <td>{formatFechaHora(c.fecha_ingreso)}</td>
                   <td>{c.empleado_nombre}</td>
                 </tr>
               ))}

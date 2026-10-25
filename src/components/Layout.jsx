@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { roleKey, roleLabel, ROLES } from "../utils/roles";
+import BarraCarga from "./BarraCarga";
 
 function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const esJefeOAdmin =
-    user && [ROLES.ADMIN, ROLES.JEFE].includes(roleKey(user));
+  const esJefe = roleKey(user) === ROLES.JEFE;
+  const esAdmin = roleKey(user) === ROLES.ADMIN;
 
   // Cierra el menú lateral al cambiar de ruta.
   useEffect(() => setMenuOpen(false), [location.pathname, location.hash]);
@@ -42,14 +43,23 @@ function Layout() {
         </Link>
 
         <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
-          {user ? (
+          {esAdmin ? (
+            // El administrador del sistema solo gestiona empresas y usuarios.
+            <>
+              <NavLink to="/empresas" onClick={cerrar}>Empresas</NavLink>
+              <NavLink to="/usuarios" onClick={cerrar}>Usuarios</NavLink>
+            </>
+          ) : user ? (
             <>
               <NavLink to="/cotizaciones" onClick={cerrar}>Cotizaciones</NavLink>
               <NavLink to="/proyectos" onClick={cerrar}>Proyectos</NavLink>
               <NavLink to="/clientes" onClick={cerrar}>Clientes</NavLink>
               <NavLink to="/dashboard" onClick={cerrar}>Dashboard</NavLink>
-              {esJefeOAdmin && (
+              {esJefe && (
                 <NavLink to="/precios" onClick={cerrar}>Precios</NavLink>
+              )}
+              {esJefe && (
+                <NavLink to="/usuarios" onClick={cerrar}>Usuarios</NavLink>
               )}
             </>
           ) : (
@@ -100,6 +110,7 @@ function Layout() {
             apilamiento del drawer (si no, el overlay quedaría por encima del
             menú y bloquearía los clics). */}
         {menuOpen && <div className="nav-overlay" onClick={cerrar} />}
+        <BarraCarga />
       </header>
 
       <main className="app-main">

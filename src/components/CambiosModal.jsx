@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { formatFecha } from "../utils/format";
+import { formatFechaHora } from "../utils/format";
+import { FormError } from "./FormErrors";
+import { Loader } from "./Loader";
 
 /**
  * Modal de "control de cambios" (historial de auditoría).
@@ -36,9 +38,9 @@ function CambiosModal({ title, cargar, onClose, mostrarObjeto = true }) {
         </div>
 
         {error ? (
-          <p className="form-error">No se pudo cargar el historial.</p>
+          <FormError msg="No se pudo cargar el historial." />
         ) : rows === null ? (
-          <p className="muted">Cargando…</p>
+          <Loader texto="Cargando historial…" />
         ) : rows.length === 0 ? (
           <p className="muted">Sin cambios registrados.</p>
         ) : (
@@ -62,7 +64,7 @@ function CambiosModal({ title, cargar, onClose, mostrarObjeto = true }) {
                     <td>{c.valor_anterior || "—"}</td>
                     <td>{c.valor_nuevo || "—"}</td>
                     <td>{c.usuario_display}</td>
-                    <td>{formatFecha(c.creado_en)}</td>
+                    <td>{formatFechaHora(c.creado_en)}</td>
                   </tr>
                 ))}
               </tbody>

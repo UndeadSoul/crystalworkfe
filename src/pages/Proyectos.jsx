@@ -7,7 +7,9 @@ import {
   ESTADO_PROD_CLASS,
   ESTADO_PAGO_CLASS,
 } from "../services/proyectos";
-import { formatCLP, formatFecha } from "../utils/format";
+import { formatCLP, formatFechaHora } from "../utils/format";
+import { FormError } from "../components/FormErrors";
+import { Loader } from "../components/Loader";
 
 function Proyectos() {
   const navigate = useNavigate();
@@ -72,11 +74,11 @@ function Proyectos() {
         </select>
       </div>
 
-      {error && <p className="form-error">{error}</p>}
+      <FormError msg={error} />
 
       <div className="panel panel-flush">
         {loading ? (
-          <p className="muted pad">Cargando…</p>
+          <Loader texto="Cargando proyectos…" />
         ) : proyectos.length === 0 ? (
           <p className="muted pad">No hay proyectos.</p>
         ) : (
@@ -114,7 +116,7 @@ function Proyectos() {
                   </td>
                   <td>{p.n_ventanas}</td>
                   <td>{formatCLP(p.total_bruto)}</td>
-                  <td>{formatFecha(p.fecha_creacion)}</td>
+                  <td>{formatFechaHora(p.fecha_creacion)}</td>
                 </tr>
               ))}
             </tbody>

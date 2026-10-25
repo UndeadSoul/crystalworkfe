@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listClientes, createCliente } from "../services/clientes";
 import ClienteForm from "../components/ClienteForm";
+import { FormError } from "../components/FormErrors";
+import { Loader } from "../components/Loader";
 
 function Clientes() {
   const navigate = useNavigate();
@@ -53,11 +55,11 @@ function Clientes() {
         />
       </div>
 
-      {error && <p className="form-error">{error}</p>}
+      <FormError msg={error} />
 
       <div className="panel panel-flush">
         {loading ? (
-          <p className="muted pad">Cargando…</p>
+          <Loader texto="Cargando clientes…" />
         ) : clientes.length === 0 ? (
           <p className="muted pad">
             {search ? "Sin resultados." : "Aún no hay clientes. Crea el primero."}

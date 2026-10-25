@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import api from "../api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import { setZonaServidor } from "../utils/format";
 
 const AuthContext = createContext(null);
 
@@ -17,6 +18,7 @@ export function AuthProvider({ children }) {
     }
     try {
       const res = await api.get("/api/me/");
+      setZonaServidor(res.data.zona_horaria_servidor);
       setUser(res.data);
     } catch {
       setUser(null);
@@ -50,6 +52,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem(ACCESS_TOKEN, res.data.access);
     localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
     const me = await api.get("/api/me/");
+    setZonaServidor(me.data.zona_horaria_servidor);
     setUser(me.data);
     return me.data;
   };
