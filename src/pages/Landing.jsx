@@ -1,8 +1,19 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { inicioPara } from "../utils/roles";
 
 function Landing() {
   const { user } = useAuth();
+  const location = useLocation();
+
+  // Desplaza a la sección cuando se llega con un hash (#que-hacemos, #trabaja).
+  useEffect(() => {
+    if (location.hash) {
+      const el = document.getElementById(location.hash.slice(1));
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location]);
 
   return (
     <div className="landing">
@@ -17,7 +28,7 @@ function Landing() {
         </p>
         <div className="hero-actions">
           {user ? (
-            <Link to="/dashboard" className="btn btn-primary btn-lg">
+            <Link to={inicioPara(user)} className="btn btn-primary btn-lg">
               Ir al panel
             </Link>
           ) : (

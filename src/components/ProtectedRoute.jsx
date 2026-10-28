@@ -1,16 +1,18 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { roleKey } from "../utils/roles";
+import { inicioPara, roleKey } from "../utils/roles";
+import { Loader } from "./Loader";
 
 /**
  * Protege una ruta. Opcionalmente restringe por rol:
  *   <ProtectedRoute roles={["ADMIN", "JEFE"]}>...</ProtectedRoute>
+ * Sin permiso, redirige a la pantalla de inicio de su rol.
  */
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="page-loading">Cargando…</div>;
+    return <Loader pagina />;
   }
 
   if (!user) {
@@ -18,7 +20,7 @@ function ProtectedRoute({ children, roles }) {
   }
 
   if (roles && !roles.includes(roleKey(user))) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={inicioPara(user)} replace />;
   }
 
   return children;

@@ -1,13 +1,109 @@
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { listCotizaciones } from "../services/cotizaciones";
+import { ESTADO_CLASS, formatCLP, formatFechaHora } from "../utils/format";
+import { FormError } from "../components/FormErrors";
+import { Loader } from "../components/Loader";
+
+const ESTADOS = [
+  { value: "", label: "Todos los estados" },
+  { value: "PENDIENTE", label: "Pendientes" },
+  { value: "APROBADA", label: "Aprobadas" },
+  { value: "RECHAZADA", label: "Rechazadas" },
+];
+
 function Cotizaciones() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  // Permite enlazar con filtro aplicado: /cotizaciones?estado=PENDIENTE
+  const [estado, setEstado] = useState(searchParams.get("estado") || "");
+  const [error, setError] = useState("");
+
+  const load = useCallback(async (filtroEstado) => {
+    setLoading(true);
+    setError("");
+    try {
+      const params = filtroEstado ? { estado: filtroEstado } : {};
+      setCotizaciones(await listCotizaciones(params));
+    } catch {
+      setError("No se pudieron cargar las cotizaciones.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load(estado);
+  }, [estado, load]);
+
   return (
     <div className="page">
-      <header className="page-head">
+      <header className="page-head page-head-row">
         <h1>Cotizaciones</h1>
+        <Link to="/cotizaciones/nueva" className="btn btn-primary">
+          + Nueva cotización
+        </Link>
       </header>
-      <div className="panel">
-        <p className="muted">
-          Aquí se crearán y listarán las cotizaciones. (Fase 2)
-        </p>
+
+      <div className="toolbar">
+        <select
+          className="search-input"
+          value={estado}
+          onChange={(e) => setEstado(e.target.value)}
+        >
+          {ESTADOS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <FormError msg={error} />
+
+      <div className="panel panel-flush">
+        {loading ? (
+          <Loader texto="Cargando cotizaciones…" />
+        ) : cotizaciones.length === 0 ? (
+          <p className="muted pad">No hay cotizaciones.</p>
+        ) : (
+          <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Ventanas</th>
+                <th>Total (c/IVA)</th>
+                <th>Fecha</th>
+                <th>Ingresada por</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cotizaciones.map((c) => (
+                <tr
+                  key={c.id}
+                  className="clickable-row"
+                  onClick={() => navigate(`/cotizaciones/${c.id}`)}
+                >
+                  <td>#{c.id}</td>
+                  <td>{c.cliente_nombre}</td>
+                  <td>
+                    <span className={ESTADO_CLASS[c.estado]}>{c.estado_display}</span>
+                  </td>
+                  <td>{c.n_ventanas}</td>
+                  <td>{formatCLP(c.total_bruto)}</td>
+                  <td>{formatFechaHora(c.fecha_ingreso)}</td>
+                  <td>{c.empleado_nombre}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+        )}
       </div>
     </div>
   );

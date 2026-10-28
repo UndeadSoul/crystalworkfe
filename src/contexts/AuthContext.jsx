@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import api from "../api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import { setZonaServidor } from "../utils/format";
 
 const AuthContext = createContext(null);
 
@@ -17,6 +18,7 @@ export function AuthProvider({ children }) {
     }
     try {
       const res = await api.get("/api/me/");
+      setZonaServidor(res.data.zona_horaria_servidor);
       setUser(res.data);
     } catch {
       setUser(null);
@@ -29,11 +31,28 @@ export function AuthProvider({ children }) {
     loadUser();
   }, [loadUser]);
 
+  // Sincroniza la sesión entre pestañas: si en otra pestaña se cierra sesión
+  // (se borra el token) o se inicia una nueva, esta pestaña se actualiza.
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === ACCESS_TOKEN) {
+        if (e.newValue) {
+          loadUser();
+        } else {
+          setUser(null);
+        }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [loadUser]);
+
   const login = async (username, password) => {
     const res = await api.post("/api/token/", { username, password });
     localStorage.setItem(ACCESS_TOKEN, res.data.access);
     localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
     const me = await api.get("/api/me/");
+    setZonaServidor(me.data.zona_horaria_servidor);
     setUser(me.data);
     return me.data;
   };
