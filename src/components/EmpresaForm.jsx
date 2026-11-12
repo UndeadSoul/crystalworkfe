@@ -6,6 +6,7 @@ import {
   LIMITES,
   PERMITIDOS,
   filtrar,
+  formatTelefono,
   soloErrores,
   validarDireccion,
   validarEmail,
@@ -46,6 +47,7 @@ function EmpresaForm({ initial, onSubmit, onClose }) {
 
   const change = (campo) => (e) => {
     if (campo === "rut") return set("rut", formatRut(e.target.value));
+    if (campo === "telefono") return set("telefono", formatTelefono(e.target.value));
     const { valor, mensaje } = filtrar(e.target.value, FILTROS[campo]);
     set(campo, valor, mensaje);
   };
@@ -93,10 +95,9 @@ function EmpresaForm({ initial, onSubmit, onClose }) {
   );
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <form
         className="modal"
-        onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
         noValidate
       >
@@ -110,7 +111,7 @@ function EmpresaForm({ initial, onSubmit, onClose }) {
         {input("nombre", "Nombre *", { maxLength: LIMITES.empresaNombreMax, placeholder: EJEMPLOS.empresa })}
         <div className="field-row">
           {input("rut", "RUT", { maxLength: 12, placeholder: EJEMPLOS.rutEmpresa })}
-          {input("telefono", "Teléfono", {
+          {input("telefono", "Teléfono *", {
             type: "tel",
             maxLength: LIMITES.telefonoMax,
             placeholder: EJEMPLOS.telefono,

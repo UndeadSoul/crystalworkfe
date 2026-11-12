@@ -60,27 +60,39 @@ function StatTile({ label, valor, sub, to }) {
 }
 
 // Barras horizontales (desgloses de estado): etiqueta + valor siempre visibles.
-function Barras({ items, colorFn }) {
+// Si se pasa `hrefFor`, cada fila enlaza al listado con el filtro de esa etiqueta.
+function Barras({ items, colorFn, hrefFor }) {
   const max = Math.max(1, ...items.map((i) => i.n));
   const total = items.reduce((s, i) => s + i.n, 0);
   if (total === 0) return <p className="muted">Sin datos todavía.</p>;
   return (
     <div className="barras">
-      {items.map((i) => (
-        <div className="barra-row" key={i.valor}>
-          <span className="barra-label">{i.label}</span>
-          <div className="barra-track">
-            <div
-              className="barra-fill"
-              style={{
-                width: `${(i.n / max) * 100}%`,
-                background: colorFn ? colorFn(i) : "var(--primary)",
-              }}
-            />
+      {items.map((i) => {
+        const contenido = (
+          <>
+            <span className="barra-label">{i.label}</span>
+            <div className="barra-track">
+              <div
+                className="barra-fill"
+                style={{
+                  width: `${(i.n / max) * 100}%`,
+                  background: colorFn ? colorFn(i) : "var(--primary)",
+                }}
+              />
+            </div>
+            <span className="barra-valor">{i.n}</span>
+          </>
+        );
+        return hrefFor ? (
+          <Link key={i.valor} to={hrefFor(i)} className="barra-row barra-row-link">
+            {contenido}
+          </Link>
+        ) : (
+          <div className="barra-row" key={i.valor}>
+            {contenido}
           </div>
-          <span className="barra-valor">{i.n}</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -207,6 +219,7 @@ function Dashboard() {
   const k = data.kpis;
   const ventanas =
     vtModo === "tipo" ? data.ventanas_por_tipo : data.ventanas_por_color;
+  const totalVentanas = data.ventanas_por_tipo.reduce((s, i) => s + i.cantidad, 0);
   const colorDonut =
     vtModo === "tipo"
       ? (_, idx) => SERIES[idx % SERIES.length]
@@ -214,14 +227,12 @@ function Dashboard() {
 
   return (
     <div className="page">
-      <header className="page-head">
-        <div>
-          <h1>Hola, {user.first_name || user.username}</h1>
-          <p className="page-sub">
-            {roleLabel(user)}
-            {user.empresa_nombre ? ` · ${user.empresa_nombre}` : ""}
-          </p>
-        </div>
+      <header className="page-head dashboard-head">
+        <h1>Dashboard</h1>
+        <span className="page-sub">
+          {roleLabel(user)}
+          {user.empresa_nombre ? ` · ${user.empresa_nombre}` : ""}
+        </span>
       </header>
 
       {/* KPIs */}
@@ -251,34 +262,14 @@ function Dashboard() {
         )}
       </section>
 
-      <section className="panel-grid">
+      <section className="panel-grid cols-3">
         <article className="panel">
           <h2>Cotizaciones por estado</h2>
           <Barras
             items={data.cotizaciones_por_estado}
             colorFn={(i) => COLOR_ESTADO[i.valor] || "var(--primary)"}
+            hrefFor={(i) => `/cotizaciones?estado=${i.valor}`}
           />
-        </article>
-
-        <article className="panel">
-          <div className="crud-head">
-            <h2>Ventanas fabricadas</h2>
-            <div className="seg">
-              <button
-                className={`seg-btn ${vtModo === "tipo" ? "active" : ""}`}
-                onClick={() => setVtModo("tipo")}
-              >
-                Tipo
-              </button>
-              <button
-                className={`seg-btn ${vtModo === "color" ? "active" : ""}`}
-                onClick={() => setVtModo("color")}
-              >
-                Color
-              </button>
-            </div>
-          </div>
-          <Donut items={ventanas} colorFor={colorDonut} />
         </article>
 
         <article className="panel">
@@ -286,6 +277,7 @@ function Dashboard() {
           <Barras
             items={data.proyectos_por_produccion}
             colorFn={(i) => COLOR_ESTADO[i.valor] || "var(--primary)"}
+            hrefFor={(i) => `/proyectos?estado=${i.valor}`}
           />
         </article>
 
@@ -294,9 +286,40 @@ function Dashboard() {
           <Barras
             items={data.proyectos_por_pago}
             colorFn={(i) => COLOR_PAGO[i.valor] || "var(--primary)"}
+            hrefFor={(i) => `/proyectos?pago=${i.valor}`}
           />
         </article>
       </section>
+
+      <details className="panel desplegable">
+        <summary>
+          <h2>Ventanas fabricadas</h2>
+          <span className="muted small">{totalVentanas} ventanas</span>
+        </summary>
+        <div className="desplegable-body">
+          <div className="seg">
+            <button
+              className={`seg-btn ${vtModo === "tipo" ? "active" : ""}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setVtModo("tipo");
+              }}
+            >
+              Tipo
+            </button>
+            <button
+              className={`seg-btn ${vtModo === "color" ? "active" : ""}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setVtModo("color");
+              }}
+            >
+              Color
+            </button>
+          </div>
+          <Donut items={ventanas} colorFor={colorDonut} />
+        </div>
+      </details>
 
       {data.ver_finanzas && (
         <section className="panel">

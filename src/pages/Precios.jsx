@@ -165,6 +165,12 @@ const TABS = [
 // `regla` (de REGLAS) define los decimales y el rango permitidos.
 function Num({ value, onChange, regla, error }) {
   const step = regla.decimales ? String(10 ** -regla.decimales) : "1";
+  // Límite de caracteres acorde a la restricción del campo: dígitos del máximo
+  // + los decimales permitidos (y el punto). Evita escribir valores fuera de
+  // rango por largo (ej: días de alerta, máx 100 → 3 dígitos). El rango exacto
+  // lo valida validarNumero (front) y el backend/BD.
+  const enteros = String(Math.floor(regla.max)).length;
+  const maxCars = enteros + (regla.decimales ? regla.decimales + 1 : 0);
   return (
     <div className="cell-field">
       <input
@@ -172,12 +178,13 @@ function Num({ value, onChange, regla, error }) {
         min="0"
         max={regla.max}
         step={step}
+        maxLength={maxCars}
         className="cell-input"
         placeholder={regla.ejemplo}
         value={value ?? ""}
         aria-invalid={Boolean(error)}
         onKeyDown={regla.decimales ? blockExponentKey : blockNonIntegerKey}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value.slice(0, maxCars))}
       />
       <FieldError msg={error} />
     </div>
@@ -229,7 +236,13 @@ const editarFila = (setDraft, ubicar) => (valor) =>
 // ----------------------------------------------------------------
 // General (margen y transporte)
 // ----------------------------------------------------------------
-const CAMPOS_CONFIG = ["margen_ganancia_pct", "precio_transporte_km"];
+const CAMPOS_CONFIG = [
+  "margen_ganancia_pct",
+  "precio_transporte_km",
+  "alerta_cotizacion_dias",
+  "alerta_estancado_dias",
+  "alerta_sin_pago_dias",
+];
 const recorrerConfig = (d, fn) => fn("config", d, CAMPOS_CONFIG);
 
 function GeneralTab({ onEditing }) {
@@ -240,6 +253,9 @@ function GeneralTab({ onEditing }) {
       validarCeldas([
         [`config.${d.id}.margen_ganancia_pct`, d.margen_ganancia_pct, REGLAS.margen],
         [`config.${d.id}.precio_transporte_km`, d.precio_transporte_km, REGLAS.transporteKm],
+        [`config.${d.id}.alerta_cotizacion_dias`, d.alerta_cotizacion_dias, REGLAS.alertaDias],
+        [`config.${d.id}.alerta_estancado_dias`, d.alerta_estancado_dias, REGLAS.alertaDias],
+        [`config.${d.id}.alerta_sin_pago_dias`, d.alerta_sin_pago_dias, REGLAS.alertaDias],
       ]),
     opsPara: (d, cambios) =>
       cambios[`config.${d.id}`]
@@ -248,6 +264,9 @@ function GeneralTab({ onEditing }) {
               updateConfigEmpresa({
                 margen_ganancia_pct: d.margen_ganancia_pct,
                 precio_transporte_km: d.precio_transporte_km,
+                alerta_cotizacion_dias: d.alerta_cotizacion_dias,
+                alerta_estancado_dias: d.alerta_estancado_dias,
+                alerta_sin_pago_dias: d.alerta_sin_pago_dias,
                 version: d.version,
               })
             ),
@@ -293,9 +312,33 @@ function GeneralTab({ onEditing }) {
           <div className="valor-ro">{formatCLP(v.precio_transporte_km)}</div>
         )}
       </label>
+
+      <h4 className="config-subtitulo">Alertas (días)</h4>
+      {[
+        ["alerta_cotizacion_dias", "Cotización pendiente"],
+        ["alerta_estancado_dias", "Proyecto estancado"],
+        ["alerta_sin_pago_dias", "Proyecto sin pago"],
+      ].map(([campo, etiqueta]) => (
+        <label className="field" key={campo}>
+          <span>{etiqueta}</span>
+          {e.editando ? (
+            <Num
+              regla={REGLAS.alertaDias}
+              value={v[campo]}
+              error={e.errores[`config.${v.id}.${campo}`]}
+              onChange={set(campo)}
+            />
+          ) : (
+            <div className="valor-ro">{v[campo]} días</div>
+          )}
+        </label>
+      ))}
+
       <FormError msg={e.general} />
       <p className="muted small">
         Precio de venta = costo × (1 + margen). Transporte = distancia × precio por km.
+        Las alertas avisan tras los días indicados (cotización sin aprobar, proyecto sin
+        avanzar o sin pagos).
       </p>
     </div>
   );

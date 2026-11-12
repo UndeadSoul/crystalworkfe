@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { inicioPara } from "../utils/roles";
+import { inicioPara, roleKey, ROLES } from "../utils/roles";
 
 function Landing() {
   const { user } = useAuth();
   const location = useLocation();
+  // Operario y jefe trabajan con cotizaciones y proyectos; el administrador no.
+  const esEmpresa = user && roleKey(user) !== ROLES.ADMIN;
 
   // Desplaza a la sección cuando se llega con un hash (#que-hacemos, #trabaja).
   useEffect(() => {
@@ -28,9 +30,21 @@ function Landing() {
         </p>
         <div className="hero-actions">
           {user ? (
-            <Link to={inicioPara(user)} className="btn btn-primary btn-lg">
-              Ir al panel
-            </Link>
+            <>
+              {esEmpresa && (
+                <Link to="/cotizaciones/nueva" className="btn btn-ghost btn-lg">
+                  Nueva cotización
+                </Link>
+              )}
+              <Link to={inicioPara(user)} className="btn btn-primary btn-lg">
+                Ir al panel
+              </Link>
+              {esEmpresa && (
+                <Link to="/proyectos" className="btn btn-ghost btn-lg">
+                  Proyectos
+                </Link>
+              )}
+            </>
           ) : (
             <Link to="/login" className="btn btn-primary btn-lg">
               Ingresar
@@ -69,6 +83,17 @@ function Landing() {
       <section id="trabaja" className="cta-strip">
         <h2>Trabaja con nosotros</h2>
         <p>Muy pronto.</p>
+      </section>
+
+      <section id="contacto" className="cta-strip">
+        <h2>Contacto</h2>
+        <p>Dudas, consultas o comentarios.</p>
+        <p className="contacto-datos">
+          <a href="mailto:crystalwork.contacto@gmail.com">
+            crystalwork.contacto@gmail.com
+          </a>
+          <a href="tel:+56945772112">+56 9 4577 2112</a>
+        </p>
       </section>
     </div>
   );

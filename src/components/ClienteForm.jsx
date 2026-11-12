@@ -6,6 +6,7 @@ import {
   LIMITES,
   PERMITIDOS,
   filtrar,
+  formatTelefono,
   soloErrores,
   validarDireccion,
   validarEmail,
@@ -47,6 +48,7 @@ function ClienteForm({ initial, onSubmit, onClose }) {
     setCampo(field, valor, mensaje);
   };
   const changeRut = (e) => setCampo("rut", formatRut(e.target.value));
+  const changeTelefono = (e) => setCampo("telefono", formatTelefono(e.target.value));
 
   const validar = () =>
     soloErrores({
@@ -94,10 +96,9 @@ function ClienteForm({ initial, onSubmit, onClose }) {
   );
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <form
         className="modal"
-        onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
         noValidate
       >
@@ -127,11 +128,12 @@ function ClienteForm({ initial, onSubmit, onClose }) {
             <FieldError msg={errores.rut} />
           </label>
           <label className="field">
-            <span>Teléfono</span>
+            <span>Teléfono *</span>
             {input("telefono", {
               type: "tel",
               maxLength: LIMITES.telefonoMax,
               placeholder: EJEMPLOS.telefono,
+              onChange: changeTelefono,
             })}
             <FieldError msg={errores.telefono} />
           </label>

@@ -37,11 +37,12 @@ export const REGLAS = {
   precio: { min: 0, max: 10_000_000, decimales: 0, unidad: "CLP", ejemplo: "Ej: 50000" },
   margen: { min: 0, max: 200, decimales: 2, unidad: "%", ejemplo: "Ej: 30" },
   transporteKm: { min: 0, max: 50_000, decimales: 0, unidad: "CLP", ejemplo: "Ej: 1000" },
-  pesoSerie: { min: 0.1, max: 100, decimales: 3, unidad: "kg", cero: true, ejemplo: "Ej: 7.5" },
-  pesoPerfil: { min: 0.001, max: 100, decimales: 3, unidad: "kg", cero: true, ejemplo: "Ej: 0.9" },
+  pesoSerie: { min: 50, max: 200, decimales: 2, unidad: "kg", cero: true, ejemplo: "Ej: 125" },
+  pesoPerfil: { min: 10, max: 35, decimales: 2, unidad: "kg", cero: true, ejemplo: "Ej: 18" },
   largoTira: { min: 1, max: 7, decimales: 3, unidad: "m", ejemplo: "Ej: 6" },
   plancha: { min: 0.5, max: 4, decimales: 3, unidad: "m", ejemplo: "Ej: 2.4" },
   cantidadPaquete: { min: 0.001, max: 999_999_999, decimales: 3, mayorQueCero: true, ejemplo: "Ej: 100" },
+  alertaDias: { min: 1, max: 100, decimales: 0, unidad: "días", ejemplo: "Ej: 7" },
 };
 
 // Ejemplos de formato para los campos de escritura (placeholder). Cada uno
@@ -90,14 +91,31 @@ const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
  * `mensaje` indica qué se quitó (vacío si no se quitó nada).
  */
 export function filtrar(texto, permitido) {
+  // NFC: recompone las tildes que algunos teclados mandan como carácter
+  // combinante aparte (á = "a" + ´). Sin esto, el combinante se descarta y
+  // la tilde "desaparece" al escribir.
+  const normal = String(texto ?? "").normalize("NFC");
   let valor = "";
   const quitados = new Set();
-  for (const ch of texto) {
+  for (const ch of normal) {
     if (permitido.test(ch)) valor += ch;
     else quitados.add(ch === " " ? "espacio" : ch);
   }
   const mensaje = quitados.size ? `No se permite: ${[...quitados].join(" ")}` : "";
   return { valor, mensaje };
+}
+
+/**
+ * Formatea un teléfono mientras se escribe: conserva un "+" inicial y agrupa
+ * los dígitos en bloques de 4 separados por espacios (sin asumir país).
+ * Limita a 12 dígitos (el máximo admitido).
+ */
+export function formatTelefono(texto) {
+  const s = String(texto ?? "");
+  const mas = s.trimStart().startsWith("+") ? "+" : "";
+  const digitos = s.replace(/\D/g, "").slice(0, LIMITES.telefonoDigitosMax);
+  const grupos = digitos.replace(/(\d{4})(?=\d)/g, "$1 ");
+  return `${mas}${grupos}`;
 }
 
 const largo = (v) => v.trim().replace(/\s+/g, " ").length;
@@ -179,8 +197,8 @@ export const validarCantidad = (v) =>
   );
 
 export function validarTelefono(v) {
-  const t = v.trim();
-  if (!t) return "";
+  const t = String(v ?? "").trim();
+  if (!t) return "El teléfono es obligatorio.";
   if (!/^\+?[0-9 ]+$/.test(t))
     return "Solo se permiten números, espacios y un + al inicio (ej: +56 9 1234 5678).";
   const digitos = t.replace(/\D/g, "").length;

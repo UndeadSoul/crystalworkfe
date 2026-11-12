@@ -25,7 +25,7 @@ function CambiosModal({ title, cargar, onClose, mostrarObjeto = true }) {
   }, []);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div
         className="modal modal-wide"
         onClick={(e) => e.stopPropagation()}

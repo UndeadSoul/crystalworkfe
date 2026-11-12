@@ -3,6 +3,8 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-do
 import { useAuth } from "../contexts/AuthContext";
 import { roleKey, roleLabel, ROLES } from "../utils/roles";
 import BarraCarga from "./BarraCarga";
+import ThemeToggle from "./ThemeToggle";
+import AlertasBell from "./AlertasBell";
 
 function Layout() {
   const { user, logout } = useAuth();
@@ -87,6 +89,8 @@ function Layout() {
         </nav>
 
         <div className="nav-actions">
+          {esJefe && <AlertasBell />}
+          <ThemeToggle />
           {user ? (
             <>
               <span className="user-chip">
@@ -118,7 +122,8 @@ function Layout() {
       </main>
 
       <footer className="app-footer">
-        CrystalWork · Gestión de cotizaciones y fabricación de ventanas de aluminio
+        CrystalWork · Registro y control de proyectos, clientes y asistencia en los
+        procesos de cotización y fabricación de ventanas de aluminio
       </footer>
     </div>
   );

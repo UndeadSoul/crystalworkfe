@@ -34,7 +34,7 @@ function ClaveModal({ usuario, onSubmit, onClose }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <form
         className="modal"
         onClick={(e) => e.stopPropagation()}
