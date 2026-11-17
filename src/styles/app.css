@@ -31,6 +31,9 @@
   --nav-h: 64px;
 }
 
+/* Tokens del modo oscuro. Se definen una vez y se aplican en dos casos:
+   el sistema está en oscuro y el usuario no forzó claro, o el usuario forzó
+   oscuro con el switch (independiente del sistema). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f172a;
@@ -56,6 +59,32 @@
     --series-5: #d55181;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-2: #172033;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-soft: #1e3a5f;
+  --danger: #f87171;
+  --danger-soft: #451a1a;
+  --c-warning: #f59e0b;
+  --c-success: #22c55e;
+  --c-danger: #ef4444;
+  --c-neutral: #94a3b8;
+  --c-info: #38bdf8;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -221,6 +250,29 @@ h3 {
   font-size: 1.05rem;
 }
 
+/* Botones del hero del landing (Nueva cotización · Ir al panel · Proyectos). */
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Datos de contacto del landing. */
+.contacto-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.contacto-datos a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.contacto-datos a:hover {
+  text-decoration: underline;
+}
+
 .btn-block {
   width: 100%;
 }
@@ -370,6 +422,50 @@ h3 {
   gap: 18px;
 }
 
+/* Encabezado del dashboard: título y rol·empresa en la misma línea. */
+.dashboard-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.dashboard-head .page-sub {
+  margin: 0;
+}
+
+/* Tres paneles en una sola línea (se apilan en pantallas angostas). */
+.panel-grid.cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 860px) {
+  .panel-grid.cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cuerpo de un panel desplegable (debajo del título/summary). */
+.desplegable-body {
+  margin-top: 14px;
+}
+.desplegable-body .seg {
+  margin-bottom: 14px;
+}
+
+/* Fila de barras que enlaza a su listado filtrado. */
+.barra-row-link {
+  text-decoration: none;
+  color: inherit;
+  padding: 3px 6px;
+  margin: -3px -6px;
+  border-radius: 6px;
+}
+.barra-row-link:hover {
+  background: var(--surface-2);
+}
+.barra-row-link:hover .barra-label {
+  color: var(--primary);
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -431,8 +527,26 @@ h3 {
   z-index: 20;
 }
 
+/* La barra con todos los elementos (hasta 7 enlaces del jefe + acciones) solo
+   entra cómoda en pantallas anchas. Por debajo de 1024px los enlaces y la
+   identidad del usuario pasan al menú lateral; arriba quedan siempre visibles
+   la campana de alertas y el switch de tema. El chip de empresa solo aparece
+   en pantallas muy anchas. Así la barra nunca se desborda. */
+
+/* El nombre de la empresa no empuja la barra: se recorta si es muy largo. */
+.user-chip {
+  max-width: 220px;
+  overflow: hidden;
+}
+
+@media (max-width: 1200px) {
+  .user-chip {
+    display: none;
+  }
+}
+
 /* ---------- Responsive ---------- */
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
   .navbar {
     gap: 12px;
   }
@@ -475,8 +589,16 @@ h3 {
     border-top: 1px solid var(--border);
   }
 
-  /* El bloque de acciones del navbar se reemplaza por el del menú */
+  /* Las acciones quedan a la derecha, pero solo con lo imprescindible:
+     la campana y el tema. El chip y los botones (Salir/Ingresar) pasan al
+     menú lateral para que la barra no se desborde. */
   .nav-actions {
+    margin-left: auto;
+  }
+  .nav-actions .btn {
+    display: none;
+  }
+  .nav-actions .theme-toggle-label {
     display: none;
   }
 }
@@ -873,6 +995,258 @@ select.badge-select option {
     background: #1e3a5f;
     color: #bfdbfe;
   }
+}
+
+/* Mismos colores de badge cuando el modo oscuro se fuerza con el switch. */
+:root[data-theme="dark"] .badge-warning {
+  background: #78350f;
+  color: #fde68a;
+}
+:root[data-theme="dark"] .badge-success {
+  background: #14532d;
+  color: #bbf7d0;
+}
+:root[data-theme="dark"] .badge-danger {
+  background: #7f1d1d;
+  color: #fecaca;
+}
+:root[data-theme="dark"] .badge-neutral {
+  background: #334155;
+  color: #cbd5e1;
+}
+:root[data-theme="dark"] .badge-info {
+  background: #1e3a5f;
+  color: #bfdbfe;
+}
+
+/* ============================================================
+   Switch de tema (claro / oscuro)
+   ============================================================ */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font: inherit;
+}
+
+.theme-toggle-track {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.theme-toggle-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+.theme-toggle-sun {
+  color: #d97706;
+}
+.theme-toggle-moon {
+  color: #94a3b8;
+}
+
+.theme-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.3);
+  transition: transform 0.2s ease;
+}
+.theme-toggle[aria-checked="true"] .theme-toggle-knob {
+  transform: translateX(22px);
+}
+
+.theme-toggle-label {
+  font-size: 13px;
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle-knob {
+    transition: none;
+  }
+}
+
+/* Variante a lo ancho para el menú lateral en móvil. */
+.theme-toggle-block {
+  width: 100%;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* ============================================================
+   Alertas (campana del navbar y página)
+   ============================================================ */
+
+.alertas-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.alertas-bell:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.alertas-bell-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+.alertas-bell-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.alertas-bell-badge.is-critica {
+  background: var(--c-danger);
+}
+.alertas-bell-badge.is-advertencia {
+  background: var(--c-warning);
+}
+
+.alertas-resumen {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.alertas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.alerta-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+  box-shadow: var(--shadow);
+}
+.alerta-card:hover {
+  border-color: var(--primary);
+}
+.alerta-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.alerta-titulo {
+  font-weight: 600;
+}
+.alerta-detalle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.alerta-flecha {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.alerta-card.is-pospuesta {
+  opacity: 0.7;
+}
+
+/* Menú "Posponer" (desplegable con <details>) dentro de una alerta. */
+.posponer {
+  position: relative;
+  flex: none;
+}
+.posponer > summary {
+  list-style: none;
+}
+.posponer > summary::-webkit-details-marker {
+  display: none;
+}
+.posponer-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.posponer-menu button {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.posponer-menu button:hover {
+  background: var(--surface-2);
+}
+
+.alertas-pospuestas {
+  margin-top: 18px;
+}
+.alertas-pospuestas .alertas-list {
+  margin-top: 10px;
+}
+
+.config-subtitulo {
+  margin: 20px 0 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.95rem;
 }
 
 /* ---------- Panels: multiples en columna ---------- */

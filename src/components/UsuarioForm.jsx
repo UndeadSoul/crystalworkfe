@@ -5,6 +5,7 @@ import {
   LIMITES,
   PERMITIDOS,
   filtrar,
+  formatTelefono,
   soloErrores,
   validarClave,
   validarEmail,
@@ -67,6 +68,7 @@ function UsuarioForm({ initial, esAdmin, empresas = [], empresaInicial = "", onS
   };
 
   const change = (campo) => (e) => {
+    if (campo === "telefono") return set("telefono", formatTelefono(e.target.value));
     if (!FILTROS[campo]) return set(campo, e.target.value);
     const { valor, mensaje } = filtrar(e.target.value, FILTROS[campo]);
     set(campo, valor, mensaje);
@@ -157,10 +159,9 @@ function UsuarioForm({ initial, esAdmin, empresas = [], empresaInicial = "", onS
       : "Nuevo operario";
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <form
         className="modal"
-        onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
         noValidate
       >
@@ -196,7 +197,7 @@ function UsuarioForm({ initial, esAdmin, empresas = [], empresaInicial = "", onS
 
         <div className="field-row">
           {input("email", "Email", { type: "email", maxLength: LIMITES.emailMax, placeholder: EJEMPLOS.email })}
-          {input("telefono", "Teléfono", {
+          {input("telefono", "Teléfono *", {
             type: "tel",
             maxLength: LIMITES.telefonoMax,
             placeholder: EJEMPLOS.telefono,

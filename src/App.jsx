@@ -14,6 +14,7 @@ import ProyectoDetalle from "./pages/ProyectoDetalle";
 import Clientes from "./pages/Clientes";
 import ClienteDetalle from "./pages/ClienteDetalle";
 import Precios from "./pages/Precios";
+import Alertas from "./pages/Alertas";
 import Usuarios from "./pages/Usuarios";
 import Empresas from "./pages/Empresas";
 import NotFound from "./pages/NotFound";
@@ -106,6 +107,14 @@ function App() {
               element={
                 <ProtectedRoute roles={["JEFE"]}>
                   <Precios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alertas"
+              element={
+                <ProtectedRoute roles={["JEFE"]}>
+                  <Alertas />
                 </ProtectedRoute>
               }
             />

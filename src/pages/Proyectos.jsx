@@ -88,8 +88,8 @@ function Proyectos() {
               <tr>
                 <th>#</th>
                 <th>Cliente</th>
-                <th>Estado</th>
                 <th>Pago</th>
+                <th>Estado</th>
                 <th>Ventanas</th>
                 <th>Total (c/IVA)</th>
                 <th>Creado</th>
@@ -105,13 +105,13 @@ function Proyectos() {
                   <td>#{p.id}</td>
                   <td>{p.cliente_nombre}</td>
                   <td>
-                    <span className={ESTADO_PROD_CLASS[p.estado_produccion]}>
-                      {p.estado_display}
+                    <span className={ESTADO_PAGO_CLASS[p.estado_pago]}>
+                      {p.estado_pago_display}
                     </span>
                   </td>
                   <td>
-                    <span className={ESTADO_PAGO_CLASS[p.estado_pago]}>
-                      {p.estado_pago_display}
+                    <span className={ESTADO_PROD_CLASS[p.estado_produccion]}>
+                      {p.estado_display}
                     </span>
                   </td>
                   <td>{p.n_ventanas}</td>
