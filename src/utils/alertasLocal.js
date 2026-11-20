@@ -2,6 +2,8 @@
 // No viaja al servidor: cada equipo recuerda sus propias alertas pospuestas.
 // Estructura: { [clave]: epochMillisHasta }
 
+import { notificarCambioAlertas } from "../services/alertas";
+
 const KEY = "alertas_pospuestas";
 const DIA_MS = 86_400_000;
 
@@ -39,12 +41,14 @@ export function posponer(clave, dias) {
   const data = vigentes();
   data[clave] = Date.now() + dias * DIA_MS;
   escribir(data);
+  notificarCambioAlertas();
 }
 
 export function reactivar(clave) {
   const data = vigentes();
   delete data[clave];
   escribir(data);
+  notificarCambioAlertas();
 }
 
 // Separa las alertas en visibles y pospuestas según lo guardado localmente.

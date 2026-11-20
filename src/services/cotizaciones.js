@@ -1,4 +1,5 @@
 import api from "../api";
+import { notificarCambioAlertas } from "./alertas";
 
 export function listCotizaciones(params) {
   return api.get("/api/cotizaciones/", { params }).then((r) => r.data);
@@ -23,9 +24,15 @@ export function getOpcionesCotizacion() {
 // `version`: la de la cotización que el usuario tiene en pantalla. Si otro
 // usuario la cambió entre medio, la API responde 409 (conflicto).
 export function aprobarCotizacion(id, version) {
-  return api.post(`/api/cotizaciones/${id}/aprobar/`, { version }).then((r) => r.data);
+  return api.post(`/api/cotizaciones/${id}/aprobar/`, { version }).then((r) => {
+    notificarCambioAlertas();
+    return r.data;
+  });
 }
 
 export function rechazarCotizacion(id, version) {
-  return api.post(`/api/cotizaciones/${id}/rechazar/`, { version }).then((r) => r.data);
+  return api.post(`/api/cotizaciones/${id}/rechazar/`, { version }).then((r) => {
+    notificarCambioAlertas();
+    return r.data;
+  });
 }

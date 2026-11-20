@@ -6,6 +6,7 @@ import {
   rechazarCotizacion,
 } from "../services/cotizaciones";
 import { useAuth } from "../contexts/AuthContext";
+import { useConfirm, useToast } from "../contexts/UIFeedback";
 import { roleKey, ROLES } from "../utils/roles";
 import { ESTADO_CLASS, formatCLP, formatFechaHora, formatMedidas } from "../utils/format";
 import { esConflicto, parseApiError } from "../utils/errors";
@@ -26,6 +27,8 @@ function Dato({ label, children }) {
 function CotizacionDetalle() {
   const { id } = useParams();
   const { user } = useAuth();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [cot, setCot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -60,7 +63,16 @@ function CotizacionDetalle() {
 
   const resolver = async (accion) => {
     const verbo = accion === "aprobar" ? "aprobar" : "rechazar";
-    if (!window.confirm(`¿Seguro que deseas ${verbo} la cotización #${cot.id}?`)) return;
+    const ok = await confirm({
+      titulo: accion === "aprobar" ? "Aprobar cotización" : "Rechazar cotización",
+      mensaje:
+        accion === "aprobar"
+          ? `¿Aprobar la cotización #${cot.id}? Se creará el proyecto correspondiente.`
+          : `¿Rechazar la cotización #${cot.id}?`,
+      textoConfirmar: accion === "aprobar" ? "Aprobar" : "Rechazar",
+      peligro: accion === "rechazar",
+    });
+    if (!ok) return;
     setError("");
     setResolviendo(accion);
     try {
@@ -68,6 +80,7 @@ function CotizacionDetalle() {
       // Se envía la versión en pantalla: si otro usuario la cambió, la API
       // responde 409 y no se aprueba algo que no se vio.
       setCot(await fn(cot.id, cot.version));
+      toast.success(accion === "aprobar" ? "Cotización aprobada." : "Cotización rechazada.");
     } catch (err) {
       const msg = parseApiError(err, { fallback: `No se pudo ${verbo} la cotización.` }).general;
       if (esConflicto(err)) {

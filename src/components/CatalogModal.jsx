@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { parseApiError } from "../utils/errors";
-import { blockExponentKey, blockNonIntegerKey } from "../utils/format";
+import { blockExponentKey, blockNonIntegerKey, sanitizarNumero } from "../utils/format";
 import { validarNumero } from "../utils/validacion";
 import { FieldError, FormError } from "./FormErrors";
 import { BotonCarga } from "./Loader";
@@ -23,11 +23,11 @@ function CatalogModal({ title, fields, initial, onSubmit, onClose }) {
   const [errores, setErrores] = useState({});
   const [general, setGeneral] = useState("");
 
-  const change = (name) => (e) => {
-    const value = e.target.value;
+  const setCampo = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
     setErrores((prev) => (prev[name] ? { ...prev, [name]: "" } : prev));
   };
+  const change = (name) => (e) => setCampo(name, e.target.value);
 
   const validar = () => {
     const e = {};
@@ -100,13 +100,20 @@ function CatalogModal({ title, fields, initial, onSubmit, onClose }) {
               </select>
             ) : (
               <input
-                type={f.type || "text"}
-                min={f.regla ? 0 : undefined}
-                max={f.regla?.max}
-                step={f.regla ? (f.regla.decimales ? 10 ** -f.regla.decimales : 1) : undefined}
+                // Campos numéricos como type="text" + inputMode (no
+                // type="number"): Firefox deja teclear letras en inputs number;
+                // con text, sanitizarNumero las filtra en el onChange.
+                type={f.type === "number" ? "text" : f.type || "text"}
+                inputMode={
+                  f.type !== "number" ? undefined : f.regla?.decimales ? "decimal" : "numeric"
+                }
                 placeholder={f.placeholder ?? f.regla?.ejemplo}
                 value={form[f.name]}
-                onChange={change(f.name)}
+                onChange={
+                  f.type === "number"
+                    ? (e) => setCampo(f.name, sanitizarNumero(e.target.value, f.regla?.decimales ?? 0))
+                    : change(f.name)
+                }
                 onKeyDown={
                   f.type !== "number"
                     ? undefined

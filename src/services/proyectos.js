@@ -1,4 +1,5 @@
 import api from "../api";
+import { notificarCambioAlertas } from "./alertas";
 
 export function listProyectos(params) {
   return api.get("/api/proyectos/", { params }).then((r) => r.data);
@@ -8,8 +9,12 @@ export function getProyecto(id) {
   return api.get(`/api/proyectos/${id}/`).then((r) => r.data);
 }
 
+// Cambiar el estado puede resolver una alerta de "proyecto estancado".
 export function updateProyecto(id, data) {
-  return api.patch(`/api/proyectos/${id}/`, data).then((r) => r.data);
+  return api.patch(`/api/proyectos/${id}/`, data).then((r) => {
+    notificarCambioAlertas();
+    return r.data;
+  });
 }
 
 export function getHojaCorte(id) {
@@ -17,14 +22,21 @@ export function getHojaCorte(id) {
 }
 
 // Pagos: responden el proyecto actualizado (estado de pago, saldo y pagos).
+// Afectan las alertas de "sin pago" / "entregado sin cobrar".
 export function registrarPago(id, data) {
-  return api.post(`/api/proyectos/${id}/pagos/`, data).then((r) => r.data);
+  return api.post(`/api/proyectos/${id}/pagos/`, data).then((r) => {
+    notificarCambioAlertas();
+    return r.data;
+  });
 }
 
 export function anularPago(id, pagoId, motivo) {
   return api
     .post(`/api/proyectos/${id}/pagos/${pagoId}/anular/`, { motivo })
-    .then((r) => r.data);
+    .then((r) => {
+      notificarCambioAlertas();
+      return r.data;
+    });
 }
 
 export function getProyectoCambios(id) {
