@@ -1,23 +1,31 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getAlertas } from "../services/alertas";
+import { Link, useLocation } from "react-router-dom";
+import { EVENTO_ALERTAS, getAlertas } from "../services/alertas";
 import { separar } from "../utils/alertasLocal";
 
 // Indicador de alertas en el navbar (solo jefe). Muestra el total y resalta
 // en rojo si hay alguna crítica. Descuenta las alertas pospuestas (locales).
 // Al pulsarlo lleva a la página /alertas.
+//
+// Se recalcula al navegar (location) y cuando algo resuelve/pospone una alerta
+// (evento EVENTO_ALERTAS); así el número no queda congelado desde el login.
 function AlertasBell({ onNavigate }) {
   const [visibles, setVisibles] = useState([]);
+  const location = useLocation();
 
   useEffect(() => {
     let vivo = true;
-    getAlertas()
-      .then((d) => vivo && setVisibles(separar(d.alertas || []).visibles))
-      .catch(() => {});
+    const cargar = () =>
+      getAlertas()
+        .then((d) => vivo && setVisibles(separar(d.alertas || []).visibles))
+        .catch(() => {});
+    cargar();
+    window.addEventListener(EVENTO_ALERTAS, cargar);
     return () => {
       vivo = false;
+      window.removeEventListener(EVENTO_ALERTAS, cargar);
     };
-  }, []);
+  }, [location.pathname]);
 
   const total = visibles.length;
   const hayCriticas = visibles.some((a) => a.severidad === "critica");

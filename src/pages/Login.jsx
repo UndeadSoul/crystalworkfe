@@ -3,7 +3,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { FormError } from "../components/FormErrors";
 import { BotonCarga } from "../components/Loader";
-import { inicioPara } from "../utils/roles";
 import { EJEMPLOS } from "../utils/validacion";
 
 function Login() {
@@ -15,7 +14,7 @@ function Login() {
   const navigate = useNavigate();
 
   if (!loading && user) {
-    return <Navigate to={inicioPara(user)} replace />;
+    return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -23,8 +22,8 @@ function Login() {
     setError("");
     setSubmitting(true);
     try {
-      const me = await login(username, password);
-      navigate(inicioPara(me));
+      await login(username, password);
+      navigate("/");
     } catch (err) {
       const status = err.response ? err.response.status : null;
       const data = err.response?.data;

@@ -79,6 +79,19 @@ export function blockNonIntegerKey(e) {
   }
 }
 
+// Deja en un campo numérico solo lo válido: dígitos y, si `decimales` > 0, un
+// único punto con hasta esa cantidad de cifras. Quita letras, símbolos y signos.
+// A diferencia de los onKeyDown de arriba, cubre lo que estos no ven (pegar,
+// arrastrar y soltar, autocompletado): el saneo va en onChange.
+export function sanitizarNumero(texto, decimales = 0) {
+  const s = String(texto ?? "").replace(/[^\d.]/g, "");
+  if (decimales === 0) return s.replace(/\./g, "");
+  const i = s.indexOf(".");
+  if (i === -1) return s;
+  const frac = s.slice(i + 1).replace(/\./g, "").slice(0, decimales);
+  return `${s.slice(0, i)}.${frac}`;
+}
+
 export const ESTADO_CLASS = {
   PENDIENTE: "badge badge-warning",
   APROBADA: "badge badge-success",

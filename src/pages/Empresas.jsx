@@ -8,6 +8,7 @@ import {
 } from "../services/empresas";
 import { formatFechaHora } from "../utils/format";
 import { parseApiError } from "../utils/errors";
+import { useConfirm, useToast } from "../contexts/UIFeedback";
 import EmpresaForm from "../components/EmpresaForm";
 import { FormError } from "../components/FormErrors";
 import { BotonCarga, Loader } from "../components/Loader";
@@ -15,6 +16,8 @@ import { BotonCarga, Loader } from "../components/Loader";
 /** Empresas del sistema (solo administrador). */
 function Empresas() {
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,11 +52,18 @@ function Empresas() {
   const cambiarActiva = async (e) => {
     const accion = e.activa ? "desactivar" : "reactivar";
     const aviso = e.activa ? " Sus usuarios no podrán iniciar sesión." : "";
-    if (!window.confirm(`¿Seguro que deseas ${accion} ${e.nombre}?${aviso}`)) return;
+    const ok = await confirm({
+      titulo: `${accion[0].toUpperCase()}${accion.slice(1)} empresa`,
+      mensaje: `¿Seguro que deseas ${accion} ${e.nombre}?${aviso}`,
+      textoConfirmar: accion[0].toUpperCase() + accion.slice(1),
+      peligro: e.activa,
+    });
+    if (!ok) return;
     setError("");
     setCambiando(e.id);
     try {
       await setEmpresaActiva(e.id, !e.activa);
+      toast.success(`Empresa ${e.activa ? "desactivada" : "reactivada"}.`);
       load(search);
     } catch (err) {
       setError(parseApiError(err, { fallback: `No se pudo ${accion} la empresa.` }).general);

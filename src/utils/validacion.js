@@ -36,12 +36,13 @@ export const LIMITES = {
 export const REGLAS = {
   precio: { min: 0, max: 10_000_000, decimales: 0, unidad: "CLP", ejemplo: "Ej: 50000" },
   margen: { min: 0, max: 200, decimales: 2, unidad: "%", ejemplo: "Ej: 30" },
+  merma: { min: 0, max: 100, decimales: 2, unidad: "%", cero: true, ejemplo: "Ej: 20" },
   transporteKm: { min: 0, max: 50_000, decimales: 0, unidad: "CLP", ejemplo: "Ej: 1000" },
   pesoSerie: { min: 50, max: 200, decimales: 2, unidad: "kg", cero: true, ejemplo: "Ej: 125" },
   pesoPerfil: { min: 10, max: 35, decimales: 2, unidad: "kg", cero: true, ejemplo: "Ej: 18" },
-  largoTira: { min: 1, max: 7, decimales: 3, unidad: "m", ejemplo: "Ej: 6" },
-  plancha: { min: 0.5, max: 4, decimales: 3, unidad: "m", ejemplo: "Ej: 2.4" },
-  cantidadPaquete: { min: 0.001, max: 999_999_999, decimales: 3, mayorQueCero: true, ejemplo: "Ej: 100" },
+  largoTira: { min: 1, max: 7, decimales: 2, unidad: "m", ejemplo: "Ej: 6" },
+  plancha: { min: 0.5, max: 4, decimales: 2, unidad: "m", ejemplo: "Ej: 2.4" },
+  cantidadPaquete: { min: 1, max: 999_999_999, decimales: 0, mayorQueCero: true, ejemplo: "Ej: 100" },
   alertaDias: { min: 1, max: 100, decimales: 0, unidad: "días", ejemplo: "Ej: 7" },
 };
 

@@ -7,7 +7,7 @@ import {
   getOpcionesCotizacion,
 } from "../services/cotizaciones";
 import { listClientes, createCliente } from "../services/clientes";
-import { blockExponentKey, blockNonIntegerKey, formatMedidas } from "../utils/format";
+import { blockExponentKey, blockNonIntegerKey, formatMedidas, sanitizarNumero } from "../utils/format";
 import { esConflicto, parseApiError } from "../utils/errors";
 import {
   EJEMPLOS,
@@ -178,11 +178,11 @@ function CotizacionNueva() {
     };
   }, [opciones]);
 
-  const changeDraft = (field) => (e) => {
-    const value = e.target.value;
+  const setDraftCampo = (field, value) => {
     setDraft((d) => ({ ...d, [field]: value }));
     setErroresDraft((prev) => (prev[field] ? { ...prev, [field]: "" } : prev));
   };
+  const changeDraft = (field) => (e) => setDraftCampo(field, e.target.value);
 
   const limiteVentanas = ventanas.length >= LIMITES.ventanasMax;
 
@@ -329,13 +329,15 @@ function CotizacionNueva() {
     <label className="field field-sm">
       <span>{label}</span>
       <input
-        type="number"
-        step="1"
+        // type="text" + inputMode (no type="number"): Firefox deja teclear
+        // letras en inputs number; con text, sanitizarNumero las filtra.
+        type="text"
+        inputMode="numeric"
         {...props}
         value={draft[field]}
         aria-invalid={Boolean(erroresDraft[field])}
         onKeyDown={blockNonIntegerKey}
-        onChange={changeDraft(field)}
+        onChange={(e) => setDraftCampo(field, sanitizarNumero(e.target.value, 0))}
       />
       <FieldError msg={erroresDraft[field]} />
     </label>
@@ -433,16 +435,14 @@ function CotizacionNueva() {
             <label className="field" style={{ maxWidth: 240 }}>
               <span>Distancia de transporte (km) *</span>
               <input
-                type="number"
-                min={LIMITES.distanciaMin}
-                max={LIMITES.distanciaMax}
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 placeholder={EJEMPLOS.distancia}
                 value={distancia}
                 aria-invalid={Boolean(errores.distancia_transporte_km)}
                 onKeyDown={blockExponentKey}
                 onChange={(e) => {
-                  setDistancia(e.target.value);
+                  setDistancia(sanitizarNumero(e.target.value, 1));
                   limpiarError("distancia_transporte_km");
                 }}
               />
@@ -519,10 +519,8 @@ function CotizacionNueva() {
           <label className="field" style={{ maxWidth: 260 }}>
             <span>Monto agregado (CLP)</span>
             <input
-              type="number"
-              min="0"
-              max={LIMITES.montoAgregadoMax}
-              step="1"
+              type="text"
+              inputMode="numeric"
               placeholder={EJEMPLOS.montoAgregado}
               value={montoAgregado}
               // Solo se habilita con un comentario que explique el monto
@@ -531,7 +529,7 @@ function CotizacionNueva() {
               aria-invalid={Boolean(errores.monto_agregado)}
               onKeyDown={blockNonIntegerKey}
               onChange={(e) => {
-                setMontoAgregado(e.target.value);
+                setMontoAgregado(sanitizarNumero(e.target.value, 0));
                 limpiarError("monto_agregado");
               }}
             />

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { UIProvider } from "./contexts/UIFeedback";
 import { ROLES_EMPRESA } from "./utils/roles";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -22,6 +23,7 @@ import NotFound from "./pages/NotFound";
 function App() {
   return (
     <AuthProvider>
+      <UIProvider>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -139,6 +141,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </UIProvider>
     </AuthProvider>
   );
 }

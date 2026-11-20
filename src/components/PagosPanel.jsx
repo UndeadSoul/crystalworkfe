@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { anularPago, registrarPago, ESTADO_PAGO_CLASS } from "../services/proyectos";
-import { blockNonIntegerKey, formatCLP, formatFecha, formatFechaHora, formatMedidas } from "../utils/format";
+import { blockNonIntegerKey, formatCLP, formatFecha, formatFechaHora, formatMedidas, sanitizarNumero } from "../utils/format";
 import { parseApiError } from "../utils/errors";
 import {
   EJEMPLOS,
@@ -169,15 +169,13 @@ function PagosPanel({ proyecto, puedeAnular, onActualizado }) {
             <label className="field">
               <span>Monto (CLP) *</span>
               <input
-                type="number"
-                min="1"
-                max={proyecto.saldo}
-                step="1"
+                type="text"
+                inputMode="numeric"
                 placeholder={EJEMPLOS.montoPago}
                 value={form.monto}
                 aria-invalid={Boolean(errores.monto)}
                 onKeyDown={blockNonIntegerKey}
-                onChange={(e) => set("monto", e.target.value)}
+                onChange={(e) => set("monto", sanitizarNumero(e.target.value, 0))}
               />
               <FieldError msg={errores.monto} />
               {!errores.monto && (

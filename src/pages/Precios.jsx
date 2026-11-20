@@ -14,7 +14,8 @@ import CatalogModal from "../components/CatalogModal";
 import CambiosModal from "../components/CambiosModal";
 import { FieldError, FormError } from "../components/FormErrors";
 import { BotonCarga, Loader } from "../components/Loader";
-import { blockExponentKey, blockNonIntegerKey, formatCLP } from "../utils/format";
+import { blockExponentKey, blockNonIntegerKey, formatCLP, sanitizarNumero } from "../utils/format";
+import { useConfirm, useToast } from "../contexts/UIFeedback";
 import { parseApiError } from "../utils/errors";
 import {
   aplicarCeldas,
@@ -40,6 +41,7 @@ const REVISAR = "Revisa los campos marcados.";
  *   opsPara(draft, cambios, base): operaciones para las filas modificadas.
  */
 function useEdicionBloque({ cargar, recorrer, validar, opsPara, onEditing }) {
+  const toast = useToast();
   const [base, setBase] = useState(null);
   const [draft, setDraft] = useState(null);
   const [editando, setEditando] = useState(false);
@@ -105,6 +107,7 @@ function useEdicionBloque({ cargar, recorrer, validar, opsPara, onEditing }) {
       setSaving(false);
       salir();
       limpiar();
+      toast.success("Cambios guardados.");
       recargar();
       return;
     }
@@ -164,7 +167,6 @@ const TABS = [
 // Input numérico compacto para celdas en modo edición (con su error debajo).
 // `regla` (de REGLAS) define los decimales y el rango permitidos.
 function Num({ value, onChange, regla, error }) {
-  const step = regla.decimales ? String(10 ** -regla.decimales) : "1";
   // Límite de caracteres acorde a la restricción del campo: dígitos del máximo
   // + los decimales permitidos (y el punto). Evita escribir valores fuera de
   // rango por largo (ej: días de alerta, máx 100 → 3 dígitos). El rango exacto
@@ -174,17 +176,21 @@ function Num({ value, onChange, regla, error }) {
   return (
     <div className="cell-field">
       <input
-        type="number"
-        min="0"
-        max={regla.max}
-        step={step}
+        // type="text" + inputMode en lugar de type="number": Firefox deja
+        // teclear letras en un input number (quedan visibles aunque .value sea
+        // ""), por lo que el saneo no podía limpiarlas. Con type="text",
+        // e.target.value trae el texto crudo y sanitizarNumero lo filtra en
+        // todos los navegadores. inputMode da el teclado numérico en móvil, y
+        // maxLength (que un input number ignora) ahora sí limita el largo.
+        type="text"
+        inputMode={regla.decimales ? "decimal" : "numeric"}
         maxLength={maxCars}
         className="cell-input"
         placeholder={regla.ejemplo}
         value={value ?? ""}
         aria-invalid={Boolean(error)}
         onKeyDown={regla.decimales ? blockExponentKey : blockNonIntegerKey}
-        onChange={(e) => onChange(e.target.value.slice(0, maxCars))}
+        onChange={(e) => onChange(sanitizarNumero(e.target.value, regla.decimales).slice(0, maxCars))}
       />
       <FieldError msg={error} />
     </div>
@@ -238,6 +244,8 @@ const editarFila = (setDraft, ubicar) => (valor) =>
 // ----------------------------------------------------------------
 const CAMPOS_CONFIG = [
   "margen_ganancia_pct",
+  "merma_aluminio_pct",
+  "merma_vidrio_pct",
   "precio_transporte_km",
   "alerta_cotizacion_dias",
   "alerta_estancado_dias",
@@ -252,6 +260,8 @@ function GeneralTab({ onEditing }) {
     validar: (d) =>
       validarCeldas([
         [`config.${d.id}.margen_ganancia_pct`, d.margen_ganancia_pct, REGLAS.margen],
+        [`config.${d.id}.merma_aluminio_pct`, d.merma_aluminio_pct, REGLAS.merma],
+        [`config.${d.id}.merma_vidrio_pct`, d.merma_vidrio_pct, REGLAS.merma],
         [`config.${d.id}.precio_transporte_km`, d.precio_transporte_km, REGLAS.transporteKm],
         [`config.${d.id}.alerta_cotizacion_dias`, d.alerta_cotizacion_dias, REGLAS.alertaDias],
         [`config.${d.id}.alerta_estancado_dias`, d.alerta_estancado_dias, REGLAS.alertaDias],
@@ -263,6 +273,8 @@ function GeneralTab({ onEditing }) {
             opFila("config", d, CAMPOS_CONFIG, cambios, () =>
               updateConfigEmpresa({
                 margen_ganancia_pct: d.margen_ganancia_pct,
+                merma_aluminio_pct: d.merma_aluminio_pct,
+                merma_vidrio_pct: d.merma_vidrio_pct,
                 precio_transporte_km: d.precio_transporte_km,
                 alerta_cotizacion_dias: d.alerta_cotizacion_dias,
                 alerta_estancado_dias: d.alerta_estancado_dias,
@@ -299,6 +311,26 @@ function GeneralTab({ onEditing }) {
           <div className="valor-ro">{v.margen_ganancia_pct} %</div>
         )}
       </label>
+      <h4 className="config-subtitulo">Merma (% de pérdida)</h4>
+      {[
+        ["merma_aluminio_pct", "Aluminio"],
+        ["merma_vidrio_pct", "Vidrio"],
+      ].map(([campo, etiqueta]) => (
+        <label className="field" key={campo}>
+          <span>{etiqueta}</span>
+          {e.editando ? (
+            <Num
+              regla={REGLAS.merma}
+              value={v[campo]}
+              error={e.errores[`config.${v.id}.${campo}`]}
+              onChange={set(campo)}
+            />
+          ) : (
+            <div className="valor-ro">{v[campo]} %</div>
+          )}
+        </label>
+      ))}
+
       <label className="field">
         <span>Precio por km de transporte (CLP)</span>
         {e.editando ? (
@@ -336,7 +368,8 @@ function GeneralTab({ onEditing }) {
 
       <FormError msg={e.general} />
       <p className="muted small">
-        Precio de venta = costo × (1 + margen). Transporte = distancia × precio por km.
+        Precio de venta = costo × (1 + margen). La merma aumenta el costo de cada
+        material: costo = costo × (1 + merma). Transporte = distancia × precio por km.
         Las alertas avisan tras los días indicados (cotización sin aprobar, proyecto sin
         avanzar o sin pagos).
       </p>
@@ -569,6 +602,8 @@ const CAMPOS_PLANCHA = ["ancho_plancha_m", "alto_plancha_m", "precio"];
 const recorrerPlanchas = (rows, fn) => rows.forEach((p) => fn("plancha", p, CAMPOS_PLANCHA));
 
 function VidriosTab({ vidrios, onEditing }) {
+  const confirm = useConfirm();
+  const toast = useToast();
   const [modal, setModal] = useState(false);
   const [eliminando, setEliminando] = useState(null); // id de la plancha
   const e = useEdicionBloque({
@@ -608,11 +643,18 @@ function VidriosTab({ vidrios, onEditing }) {
     e.recargar();
   };
   const eliminar = async (p) => {
-    if (!window.confirm("¿Eliminar esta plancha?")) return;
+    const ok = await confirm({
+      titulo: "Eliminar plancha",
+      mensaje: "¿Seguro que deseas eliminar esta plancha de vidrio? Esta acción no se puede deshacer.",
+      textoConfirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     e.setGeneral("");
     setEliminando(p.id);
     try {
       await planchaApi.remove(p.id);
+      toast.success("Plancha eliminada.");
       e.recargar();
     } catch (err) {
       e.setGeneral(parseApiError(err, { fallback: "No se pudo eliminar la plancha." }).general);
@@ -826,6 +868,7 @@ function InsumosTab({ onEditing }) {
 
 // ----------------------------------------------------------------
 function Precios() {
+  const confirm = useConfirm();
   const [tab, setTab] = useState("general");
   const [opciones, setOpciones] = useState({ colores: [], vidrios: [] });
   const [editingTabs, setEditingTabs] = useState({});
@@ -858,9 +901,16 @@ function Precios() {
     return Object.fromEntries(TABS.map((t) => [t.id, make(t.id)]));
   }, []);
 
-  const cambiarTab = (id) => {
-    if (dirty && !window.confirm("Tienes cambios sin guardar. ¿Cambiar de sección sin guardar?"))
-      return;
+  const cambiarTab = async (id) => {
+    if (dirty) {
+      const ok = await confirm({
+        titulo: "Cambios sin guardar",
+        mensaje: "Tienes cambios sin guardar en esta sección. ¿Cambiar de sección y descartarlos?",
+        textoConfirmar: "Descartar y cambiar",
+        peligro: true,
+      });
+      if (!ok) return;
+    }
     setEditingTabs({});
     setTab(id);
   };

@@ -9,6 +9,7 @@ import {
 } from "../services/usuarios";
 import { listEmpresas } from "../services/empresas";
 import { useAuth } from "../contexts/AuthContext";
+import { useConfirm, useToast } from "../contexts/UIFeedback";
 import { roleKey, ROLES } from "../utils/roles";
 import { formatFechaHora } from "../utils/format";
 import { parseApiError } from "../utils/errors";
@@ -31,6 +32,8 @@ const ESTADOS = [
  */
 function Usuarios() {
   const { user } = useAuth();
+  const confirm = useConfirm();
+  const toast = useToast();
   const esAdmin = roleKey(user) === ROLES.ADMIN;
   const [searchParams] = useSearchParams();
 
@@ -85,11 +88,18 @@ function Usuarios() {
     const aviso = u.is_active
       ? " No podrá iniciar sesión; su historial se conserva."
       : "";
-    if (!window.confirm(`¿Seguro que deseas ${accion} a ${u.username}?${aviso}`)) return;
+    const ok = await confirm({
+      titulo: `${accion[0].toUpperCase()}${accion.slice(1)} usuario`,
+      mensaje: `¿Seguro que deseas ${accion} a ${u.username}?${aviso}`,
+      textoConfirmar: accion[0].toUpperCase() + accion.slice(1),
+      peligro: u.is_active,
+    });
+    if (!ok) return;
     setError("");
     setCambiando(u.id);
     try {
       await setUsuarioActivo(u.id, !u.is_active);
+      toast.success(`Usuario ${u.is_active ? "desactivado" : "reactivado"}.`);
       recargar();
     } catch (err) {
       setError(parseApiError(err, { fallback: `No se pudo ${accion} el usuario.` }).general);

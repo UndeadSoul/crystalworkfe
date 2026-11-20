@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CatalogModal from "./CatalogModal";
+import { useConfirm, useToast } from "../contexts/UIFeedback";
 
 /**
  * Tabla con alta/edición/eliminación sobre un endpoint del catálogo.
@@ -24,6 +25,8 @@ function CrudTable({
   canDelete = true,
 }) {
   const [modal, setModal] = useState(null); // null | {} (nuevo) | row (editar)
+  const confirm = useConfirm();
+  const toast = useToast();
 
   const handleSubmit = async (form) => {
     const payload = { ...baseData, ...form };
@@ -37,12 +40,19 @@ function CrudTable({
   };
 
   const handleDelete = async (row) => {
-    if (!window.confirm(`¿Eliminar este ${singular}?`)) return;
+    const ok = await confirm({
+      titulo: `Eliminar ${singular}`,
+      mensaje: `¿Seguro que deseas eliminar este ${singular}? Esta acción no se puede deshacer.`,
+      textoConfirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     try {
       await api.remove(row.id);
+      toast.success("Eliminado.");
       onChanged();
     } catch {
-      alert("No se pudo eliminar.");
+      toast.error("No se pudo eliminar.");
     }
   };
 
